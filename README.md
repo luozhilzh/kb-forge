@@ -53,6 +53,11 @@ One **core** (the single source of truth) wrapped by thin shells:
 
 See [`docs/design.md`](docs/design.md) for the full design (and [`知识星球整理工具集_开源方案.md`](https://example.invalid) for the planning rationale).
 
+All four forms call the **same core** through the `kbforge` CLI (subprocess), pinned to
+`kbforge>=0.1.0,<1.0.0` so a 1.0 API break fails loudly instead of silently breaking B /
+the expert (see §12-⑤). The B skill lives in [`B-workbuddy-skill/`](B-workbuddy-skill/SKILL.md);
+the expert package in [`expert/`](expert/expert.md).
+
 ### Compliance
 
 This repository contains **only synthetic data** under `tests/fixtures/`. Never commit real posts or attachments — see [`SECURITY.md`](SECURITY.md).
@@ -87,6 +92,10 @@ kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
 ### 架构
 
 **一个 core（唯一真相源）** + 四层薄封装：A(CLI) / B(WorkBuddy Skill) / C(可 import 框架) / Expert(专家包)。详见 `docs/design.md`。
+
+四层薄封装都通过 `kbforge` CLI（子进程）调用同一个 core，兼容区间钉在
+`kbforge>=0.1.0,<1.0.0`（1.0 改 API 会安装即失败告警，见 §12-⑤）。B 在
+[`B-workbuddy-skill/`](B-workbuddy-skill/SKILL.md)，专家包在 [`expert/`](expert/expert.md)。
 
 ### 合规
 

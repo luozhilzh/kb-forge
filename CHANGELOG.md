@@ -24,4 +24,16 @@ All notable changes to this project are documented here. The format is based on
 - `export` CLI command: `kbforge export --format pptx|html|md [--types ...] [--out ...]`.
 - Golden tests: `test_exporters.py` (extract shape + pptx/html round-trip + md).
 
+### Added (Phase 2 delivery forms: B skill + expert)
+- `B-workbuddy-skill/`: WorkBuddy Skill — `SKILL.md` (trigger words + drives core
+  via `kbforge` CLI subprocess + compliance red lines), `references/usage.md`
+  (canonical HOWTO), `scripts/run_pipeline.py` (thin CLI wrapper),
+  `requirements.txt` pinned to `kbforge>=0.1.0,<1.0.0`.
+- `expert/`: WorkBuddy expert package, structurally identical to B (§3 / §12-⑤) —
+  reuses the same core orchestrator and the same `references/usage.md`; its own
+  `requirements.txt` uses the same compatibility range.
+- CI `smoke-core-api` now exercises the exact CLI surface B / expert invoke
+  (make-fixtures → build → export → assert file), completing the §12-⑤ drift guard.
+- README / CHANGELOG updated with the four-form architecture and compatibility pin.
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0

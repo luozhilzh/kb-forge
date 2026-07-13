@@ -1,0 +1,4 @@
+# Same compatibility range as the B skill (§12-⑤ drift guard).
+# Upper bound <1.0.0 makes a 1.0 API break fail loudly instead of silently
+# breaking this expert package.
+kbforge>=0.1.0,<1.0.0

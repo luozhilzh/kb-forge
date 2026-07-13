@@ -1,0 +1,4 @@
+# Compatibility range pinned by §12-⑤ (B↔core drift guard).
+# Upper bound <1.0.0 makes a 1.0 API break fail loudly (install error) instead
+# of silently breaking this skill when core changes.
+kbforge>=0.1.0,<1.0.0
