@@ -85,6 +85,24 @@ All notable changes to this project are documented here. The format is based on
   round-trip, compare add/remove/change, baseline creation; noop vs local
   extraction, source anchor, short-sentence skip, dict shape).
 
+### Added (Phase 4 closure: MCP server)
+- `src/kbforge/mcp_server.py`: exposes the local-first core as **standard MCP
+  tools** so any LLM agent can forge + query a knowledge base in-loop. Tools:
+  `query` / `export` / `build_site` / `enrich` / `validate` / `diff` / `build`.
+  Every tool returns serializable data (list/dict shapes identical to the
+  `--format json` CLI output).
+- `mcp` is an **optional** dependency (`pip install 'kbforge[mcp]'`); the base
+  install and the tool functions remain importable without it (`mcp` is imported
+  lazily inside `create_server`). The server wraps the same zero-dependency local
+  tools — no external model or vector store is touched at runtime.
+- `mcp` CLI command: `kbforge mcp [--transport stdio|sse]` (stdio is the default
+  for local agents). CLI stays usable without the `mcp` extra (lazy import).
+- `mcp` added to `[project.optional-dependencies]` and to the `dev` extra so CI
+  covers the registration guard.
+- Golden tests: `test_mcp.py` (tool functions on a built wiki — query/validate/
+  enrich/diff/export/build_site/build; plus a registration guard that asserts
+  all 7 tool names are wired up, skipped where `mcp` is not installed).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
 
 ---
@@ -165,5 +183,19 @@ All notable changes to this project are documented here. The format is based on
   local|none]`；均支持 `--format json`（对 MCP 友好）。
 - Golden 测试：`test_diff.py` + `test_enrich.py`（校验、快照往返、增删改对比、基线创建；
   noop vs 本地抽取、来源锚点、短句过滤、字典形状）。
+
+### 新增（Phase 4 闭环：MCP server）
+- `src/kbforge/mcp_server.py`：把本地优先 core 暴露成**标准 MCP 工具**，让任意 LLM
+  agent 在自身循环内「锻造 + 检索」知识库。工具：`query` / `export` / `build_site` /
+  `enrich` / `validate` / `diff` / `build`。每个工具都返回可序列化数据（与 CLI
+  `--format json` 完全同构的 list/dict 形状）。
+- `mcp` 是**可选**依赖（`pip install 'kbforge[mcp]'`）；基础安装与工具函数在其缺失时
+  仍可用（`mcp` 在 `create_server` 内懒加载）。server 包装的还是那套零依赖本地工具——
+  运行时绝不碰外部模型或向量库。
+- `mcp` CLI 命令：`kbforge mcp [--transport stdio|sse]`（stdio 为本地 agent 默认）。
+  CLI 在未装 `mcp` extra 时仍可用（懒加载）。
+- `mcp` 加入 `[project.optional-dependencies]` 及 `dev` extra，使 CI 覆盖注册守卫。
+- Golden 测试：`test_mcp.py`（在已编译 wiki 上的工具函数——query/validate/enrich/diff/
+  export/build_site/build；外加注册守卫断言 7 个工具名全部接上，未装 `mcp` 时跳过）。
 
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0

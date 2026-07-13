@@ -51,7 +51,33 @@ kbforge validate --kb-root tests/fixtures/sample_kb
 kbforge diff    --kb-root tests/fixtures/sample_kb   # baseline snapshot on first run
 # Extract claim-level source anchors so RAG can cite the origin post
 kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
+
+# Expose everything as standard MCP tools for any LLM agent (RAG closure)
+pip install 'kbforge[mcp]'
+kbforge mcp                 # stdio server (default for local agents)
+# kbforge mcp --transport sse   # for remote agents
 ```
+
+### MCP server (agent-native delivery)
+
+All the tools above are also exposed as standard **MCP** tools, so an LLM agent
+can forge and query a knowledge base without leaving its loop. The server wraps
+the **same local-first core** — no external model or vector store is touched, so
+it stays zero-dependency at runtime (the `mcp` package is an optional install):
+
+```python
+# Tool names registered on the server:
+query       # retrieve wiki pages for a query (PPR over the link graph)
+export      # render case/pitfall bundles to pptx | html | md
+build_site  # generate a browsable MkDocs site
+enrich      # extract claim-level source anchors
+validate    # OKF contract check
+diff        # anti-drift guard after a re-ingest
+build       # compile the wiki from a kb root
+```
+
+Each tool returns serializable data (lists/dicts of the same shapes as the
+`--format json` CLI output), so an agent gets structured, citeable results.
 
 ### Architecture
 
@@ -75,12 +101,13 @@ the expert package in [`expert/`](expert/expert.md).
 delivery forms B (Skill) + Expert · retrieval (`query` / `GraphRetriever` PPR +
 BM25, embedding OFF) · publish (`site` MkDocs generator) · **`enrich`** (local
 claim anchoring; LLM strategy OFF by default) · **`diff`** (OKF anti-drift guard:
-`validate` + snapshot/diff after re-ingest).
+`validate` + snapshot/diff after re-ingest) · **MCP server** (`kbforge mcp`,
+exposes query/export/build_site/enrich/validate/diff/build as standard MCP tools;
+`pip install 'kbforge[mcp]'`, optional dependency, zero runtime model/vector deps).
 
 **Deferred (not in MVP):** `enrich` LLM strategy (interface implemented, OFF by
 default) · `dedupe` cross-post merge · five page types (extend with scheme /
-comparison) · MCP server (Phase 4; `query` output is already MCP-friendly). See
-[`docs/design.md`](docs/design.md).
+comparison). See [`docs/design.md`](docs/design.md).
 
 ### Compliance
 
@@ -125,7 +152,32 @@ kbforge validate --kb-root tests/fixtures/sample_kb
 kbforge diff    --kb-root tests/fixtures/sample_kb   # 首次运行建基线快照
 # 抽取 claim 级来源锚点，让 RAG 能回溯原帖
 kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
+
+# 把全部能力暴露成标准 MCP 工具，让任意 LLM agent 直接调用（RAG 闭环）
+pip install 'kbforge[mcp]'
+kbforge mcp                 # stdio 服务（本地 agent 默认）
+# kbforge mcp --transport sse   # 远程 agent 用 sse
 ```
+
+### MCP server（agent 原生交付形态）
+
+上面所有命令也都暴露成标准 **MCP** 工具，让 LLM agent 不必跳出自身循环即可
+「锻造 + 检索」知识库。server 包装的**还是同一个本地优先 core**——不碰任何外部
+模型或向量库，运行时零依赖（`mcp` 包是可选安装）：
+
+```python
+# 注册到 server 的工具名：
+query       # 对查询检索 wiki 页面（链接图上做 PPR）
+export      # 把案例/踩坑 bundle 渲染成 pptx | html | md
+build_site  # 生成可浏览 MkDocs 站点
+enrich      # 抽取 claim 级来源锚点
+validate    # OKF 契约校验
+diff        # 重抓后的防漂移守卫
+build       # 从 kb root 编译 wiki
+```
+
+每个工具都返回可序列化数据（与 CLI `--format json` 同构的 list/dict），agent 拿到
+的是结构化、可追溯的结果。
 
 ### 架构
 
@@ -140,11 +192,12 @@ kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
 **已实现（已测试）：** Phase 0 骨架 · 导出族（Markdown / PPTX / HTML）· 交付形态 B（Skill）
 + 专家包 · 检索（`query` / `GraphRetriever` PPR + BM25，embedding OFF）· 发布
 （`site` MkDocs 生成器）· **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）·
-**`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）。
+**`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）· **MCP server**
+（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/build 暴露成标准 MCP 工具；
+`pip install 'kbforge[mcp]'`，可选依赖，运行时零模型/向量依赖）。
 
 **延后（不在 MVP）：** `enrich` 的 LLM 策略（接口已就位，默认 OFF）· `dedupe` 跨帖合并
-· 五类页面（扩 scheme / comparison）· MCP server（Phase 4；`query` 输出已对 MCP 友好）。
-详见 [`docs/design.md`](docs/design.md)。
+· 五类页面（扩 scheme / comparison）。详见 [`docs/design.md`](docs/design.md)。
 
 ### 合规
 

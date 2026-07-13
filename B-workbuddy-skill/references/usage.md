@@ -44,6 +44,12 @@ LLM_API_KEY=...
 | `make-fixtures --out <dir>` | generate a synthetic demo KB (no real data) |
 | `build --kb-root <dir> [--dry-run] [--stage ...] [--topic t123] [--profile ...]` | compile the OKF wiki |
 | `export --kb-root <dir> --format pptx\|html\|md [--out <file>] [--types case,pitfall,concept]` | extract `CaseBundle`s and render |
+| `query "<text>" [--top-k N] [--backend graph\|embedding] [--format text\|json]` | RAG-ready retrieval (PPR over the link graph) |
+| `site --kb-root <dir> [--out DIR] [--theme material\|readthedocs\|mkdocs] [--build/--no-build]` | browsable MkDocs site |
+| `validate --kb-root <dir>` | OKF contract check (type / hash / broken links) |
+| `diff --kb-root <dir>` | anti-drift guard; baseline snapshot on first run |
+| `enrich --kb-root <dir> [--strategy local\|none]` | claim-level source anchors for RAG citing |
+| `mcp [--transport stdio\|sse]` | expose all of the above as standard MCP tools (requires `pip install 'kbforge[mcp]'`) |
 
 ## 4. Compliance (non-negotiable)
 
@@ -112,6 +118,10 @@ LLM_API_KEY=...
 | `export --kb-root <dir> --format pptx\|html\|md [--out <file>] [--types case,pitfall,concept]` | 萃取 `CaseBundle` 并渲染 |
 | `query "<文本>" [--top-k N] [--backend graph\|embedding] [--format text\|json]` | RAG 就绪检索 |
 | `site --kb-root <dir> [--out DIR] [--theme material\|readthedocs\|mkdocs] [--build/--no-build]` | 生成可浏览 MkDocs 站点 |
+| `validate --kb-root <dir>` | OKF 契约校验（type / hash / 断链） |
+| `diff --kb-root <dir>` | 防漂移守卫；首次运行建基线快照 |
+| `enrich --kb-root <dir> [--strategy local\|none]` | 抽取 claim 级来源锚点，供 RAG 回溯 |
+| `mcp [--transport stdio\|sse]` | 把上述全部能力暴露成标准 MCP 工具（需 `pip install 'kbforge[mcp]'`） |
 
 ### 4. 合规（不可妥协）
 

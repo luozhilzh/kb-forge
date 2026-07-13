@@ -60,7 +60,8 @@ the in-repo companion to the planning rationale
 
 ```
 src/kbforge/
-├── cli.py                  # A: click commands (make-fixtures/build/export/query/site)
+├── cli.py                  # A: click commands (make-fixtures/build/export/query/site/validate/diff/enrich/mcp)
+├── mcp_server.py           # MCP server (optional `mcp` dep): exposes core as standard MCP tools
 ├── config.py               # config contract (yaml + .env), PathsConfig, QueryConfig
 ├── frontmatter.py          # tiny YAML-frontmatter helper (no extra dep)
 ├── adapters/               # pluggable platform fetchers
@@ -186,6 +187,46 @@ it reaches RAG. All report types expose `to_dict()` for MCP-friendly output.
 断链、孤儿引用、契约违规。每次重抓后重跑，即可在漂移进入 RAG 前抓住。所有报告类型均提供
 `to_dict()` 以对 MCP 友好。
 
+## 7.6 MCP server / MCP 服务
+
+The product closure of the RAG pipeline. `src/kbforge/mcp_server.py` exposes the
+local-first core as **standard MCP tools** so any LLM agent can forge + query a
+knowledge base without leaving its loop. It is **not** a fifth shell — it is a
+thin wrapper that calls the same core functions as the CLI.
+
+**Tools registered:** `query` / `export` / `build_site` / `enrich` / `validate` /
+`diff` / `build`. Each returns serializable data (list/dict shapes identical to
+the `--format json` CLI output).
+
+**Optional dependency, lazy import.** `mcp` is declared in
+`[project.optional-dependencies]` (`pip install 'kbforge[mcp]'`). The module's
+tool functions import only `core`, so the base install and the functions remain
+importable without `mcp`; the `FastMCP` server is built lazily inside
+`create_server()`. The CLI `kbforge mcp [--transport stdio|sse]` lazy-imports the
+server, so the CLI itself never requires `mcp`.
+
+**Zero runtime model/vector cost.** The server wraps the same zero-dependency
+local tools as the CLI/B/Expert — no external LLM or vector store is touched.
+This keeps the "local-first, external-model-deferred" principle intact even when
+the toolkit is consumed as an agent tool.
+
+## 7.6 MCP server / MCP 服务
+
+RAG 流水线的产品闭环。`src/kbforge/mcp_server.py` 把本地优先 core 暴露成**标准 MCP
+工具**，让任意 LLM agent 不必跳出自身循环即可「锻造 + 检索」知识库。它**不是**第五个壳——
+只是一个薄封装，调用的还是与 CLI 相同的 core 函数。
+
+**注册的工具：** `query` / `export` / `build_site` / `enrich` / `validate` / `diff` /
+`build`。每个工具都返回可序列化数据（与 CLI `--format json` 完全同构的 list/dict 形状）。
+
+**可选依赖、懒加载。** `mcp` 声明在 `[project.optional-dependencies]`（`pip install
+'kbforge[mcp]'`）。模块的工具函数只 import `core`，因此基础安装与函数在其缺失时仍可用；
+`FastMCP` server 在 `create_server()` 内懒加载。CLI 的 `kbforge mcp [--transport
+stdio|sse]` 懒加载该 server，故 CLI 自身绝不依赖 `mcp`。
+
+**运行时零模型/向量成本。** server 包装的与 CLI/B/Expert 是同一套零依赖本地工具——绝不碰
+外部 LLM 或向量库。即使以 agent 工具形态被消费，「本地优先、外部模型后置」原则依然成立。
+
 ## 8. Compatibility pin / 兼容区间
 
 All thin shells (B, Expert) declare `kbforge>=0.1.0,<1.0.0`. The upper bound
@@ -219,12 +260,14 @@ surface B / the expert invoke.
 - Publish: `site` / MkDocs generator.
 - **`enrich`** (local claim anchoring; LLM strategy OFF by default).
 - **`diff`** (OKF anti-drift guard: `validate` + snapshot/diff after re-ingest).
+- **MCP server** (`kbforge mcp`, exposes query/export/build_site/enrich/validate/
+  diff/build as standard MCP tools; optional `mcp` dependency, zero runtime
+  model/vector cost).
 
 **Deferred (not in MVP):**
 - `enrich` LLM strategy (interface implemented, OFF by default).
 - `dedupe` cross-post merge.
 - Five page types (extend concept/entity/case/pitfall with scheme/comparison).
-- MCP server (Phase 4; query output already MCP-friendly).
 
 **已实现（已测试）：**
 - Phase 0 骨架：打包、配置契约、adapter 抽象、合成 fixtures、OKF golden 测试。
@@ -234,9 +277,10 @@ surface B / the expert invoke.
 - 发布：`site` / MkDocs 生成器。
 - **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）。
 - **`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）。
+- **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/
+  build 暴露成标准 MCP 工具；`mcp` 为可选依赖，运行时零模型/向量成本）。
 
 **延后（不在 MVP）：**
 - `enrich` 的 LLM 策略（接口已就位，默认 OFF）。
 - `dedupe` 跨帖合并。
 - 五类页面（在 concept/entity/case/pitfall 基础上扩 scheme/comparison）。
-- MCP server（Phase 4；query 输出已对 MCP 友好）。

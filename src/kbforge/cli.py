@@ -214,6 +214,23 @@ def enrich_cmd(kb_root, wiki_dir, strategy, fmt):
             click.echo(f"  - [{c['source_anchor']}] {c['text']}")
 
 
+@cli.command("mcp")
+@click.option(
+    "--transport",
+    default="stdio",
+    type=click.Choice(["stdio", "sse"]),
+    help="MCP transport. stdio is the default for local agents; sse for remote.",
+)
+def mcp_cmd(transport):
+    """Run the kb-forge MCP server (exposes query/export/site/enrich/validate/diff/build)."""
+    from .mcp_server import run_server
+
+    try:
+        run_server(transport=transport)
+    except ImportError as exc:
+        raise click.ClickException(str(exc))
+
+
 def main() -> None:
     cli()
 
