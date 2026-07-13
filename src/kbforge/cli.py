@@ -9,6 +9,7 @@ import click
 from .config import load_config
 from .core import run
 from .core.exporters import get_exporter, extract_bundles
+from .core.query import query_wiki
 from .tools import make_fixtures
 
 
@@ -65,6 +66,32 @@ def export_cmd(kb_root, wiki_dir, fmt, out, types):
     out_path = Path(out) if out else (cfg.root / f"export{exporter.suffix}")
     written = exporter.export(bundles, out_path)
     click.echo(f"Exported {len(bundles)} bundles -> {written}")
+
+
+@cli.command("query")
+@click.argument("query_text")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--top-k", default=5, type=int, help="Max number of hits.")
+@click.option("--backend", default=None, type=click.Choice(["graph", "embedding"]), help="Retriever backend (default: from config).")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
+def query_cmd(query_text, kb_root, wiki_dir, top_k, backend, fmt):
+    """Retrieve relevant wiki pages for a query (RAG-ready)."""
+    import json
+
+    cfg = load_config(start_dir=Path.cwd())
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    backend = backend or cfg.query.backend
+    results = query_wiki(wiki, query_text, top_k=top_k, backend=backend)
+    if fmt == "json":
+        click.echo(json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
+    else:
+        if not results:
+            click.echo("(no hits)")
+        for r in results:
+            click.echo(f"{r.score:.4f}  [{r.id}]  {r.snippet}")
 
 
 def main() -> None:

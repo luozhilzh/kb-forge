@@ -72,6 +72,7 @@ This repository contains **only synthetic data** under `tests/fixtures/`. Never 
 - **归档**：原始帖按年/月归档，文件名稳定为 `t<topic_id>`。
 - **编译 wiki**：概念 / 实体 / 案例 / 踩坑 四类页面，机械层 + 可选 LLM 增强，每条 claim 锚定来源。
 - **萃取**：案例/踩坑 → 结构化 `CaseBundle` → 导出 PPT / Markdown / HTML。
+- **检索（RAG 就绪）**：`query` 在编译后的 wiki 上做个性化 PageRank（`GraphRetriever`，零 embedding 依赖），可选 embedding 后端（OFF）。
 - **产物对齐 OKF**（Google *Open Knowledge Format* v0.1）：Markdown + YAML frontmatter，`type` 必填，链接即知识图谱。
 
 ### 安装
@@ -87,6 +88,9 @@ python -m kbforge make-fixtures --out tests/fixtures/sample_kb
 kbforge build --kb-root tests/fixtures/sample_kb --dry-run
 kbforge build --kb-root tests/fixtures/sample_kb
 kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
+# RAG-ready retrieval over the compiled wiki (PPR over the link graph)
+kbforge query "RAG 评测" --kb-root tests/fixtures/sample_kb --top-k 3
+kbforge query "RAG 评测" --kb-root tests/fixtures/sample_kb --format json
 ```
 
 ### 架构

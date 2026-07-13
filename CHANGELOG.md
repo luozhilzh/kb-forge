@@ -36,4 +36,18 @@ All notable changes to this project are documented here. The format is based on
   (make-fixtures → build → export → assert file), completing the §12-⑤ drift guard.
 - README / CHANGELOG updated with the four-form architecture and compatibility pin.
 
+### Added (Phase 3 retrieval: query / RAG-readiness)
+- `core/query/`: backend-agnostic retriever layer.
+  - `GraphRetriever` (MVP default): Personalized PageRank over the `[[wiki-link]]`
+    graph — undirected uniform graph → BM25 lexical seed → PPR (α=0.85) power
+    iteration → sparse fallback to pure BM25. Zero embedding cost, deterministic.
+  - `BM25`: dependency-free scorer with CJK bigram tokenization (zero-dep, per P2 decision).
+  - `EmbeddingRetriever`: optional, OFF by default; lazy-loads a user-supplied
+    embedder + vector store (never imported by CI). Extension point only.
+  - `Result` is fully serializable (MCP-friendly, per §5.7 / §12-④).
+- `query` CLI command: `kbforge query "<text>" [--top-k N] [--backend graph|embedding]
+  [--format text|json]`; `--format json` emits the serializable results.
+- Golden tests: `test_query.py` (tokenize bigram, GraphRetriever ranking, BM25
+  fallback, registry, embedding-unconfigured guard, context shape).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
