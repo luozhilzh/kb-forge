@@ -1,0 +1,35 @@
+# Copy this file to config.yaml (git-ignored) and fill in YOUR non-secret values.
+# NEVER put a real group_id, token, or API key here. Secrets go in .env.
+
+kb_root: "./my-knowledge-base"
+group_id: "REPLACE_WITH_YOUR_GROUP_ID"   # placeholder; never a real value in a committed file
+platform: "zsxq"
+local_attach_dir: "_attachments_src"
+zsxq_cli_path: "zsxq-cli"
+
+output:
+  enabled: true
+  formats: [pptx, md]
+
+wiki:
+  schema_path: "SCHEMA.md"
+  slug_style: "kebab"
+  page_char_limit: 4000
+  enrich:
+    enabled: false
+    model: ""
+
+fetch:
+  page_size: 50
+  long_tail_guard: 5
+  incremental: false
+
+paths:
+  raw: "raw"
+  wiki: "wiki"
+  archive: "archive"
+  cases: "cases"
+  attachments: "_attachments"
+
+query:
+  backend: "graph"

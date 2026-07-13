@@ -1,0 +1,35 @@
+# kb-forge default configuration (overridable via --profile <name> -> config.<name>.yaml)
+# Non-secret values only. Secrets (API keys, tokens, attachment passwords) live in .env or keychain.
+
+kb_root: "."                 # knowledge-base root; resolved to an absolute path at load time
+group_id: "planet_demo_001"  # PLACEHOLDER — never a real group_id in committed configs
+platform: "zsxq"             # selects adapters.<platform>.py
+local_attach_dir: "_attachments_src"  # local mirror of manually downloaded attachments (read-only source)
+zsxq_cli_path: "zsxq-cli"    # configurable; never hardcode an absolute machine path
+
+output:
+  enabled: true
+  formats: [pptx, md]        # choose any subset; exporters registered in kbforge.core.exporters
+
+wiki:
+  schema_path: "SCHEMA.md"   # runtime-parsed topic list (do not hardcode topics in code)
+  slug_style: "kebab"        # kebab | snake
+  page_char_limit: 4000
+  enrich:
+    enabled: false           # mechanical layer is always ON; LLM enrichment is OFF by default
+    model: ""                # filled only when enrich.enabled: true (key from .env)
+
+fetch:
+  page_size: 50
+  long_tail_guard: 5         # stop if next_end_time fails to decrease for this many pages
+  incremental: false         # forward fetch of new posts (verify zsxq-cli supports it at build time)
+
+paths:
+  raw: "raw"
+  wiki: "wiki"
+  archive: "archive"
+  cases: "cases"
+  attachments: "_attachments"
+
+query:
+  backend: "graph"           # graph (PPR, default, zero-dependency) | embedding (optional, OFF)

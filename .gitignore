@@ -1,0 +1,32 @@
+# ── Secrets / runtime state (never commit) ──
+.env
+.kbforge/
+state/
+
+# ── Real user data must never enter the open-source repo ──
+# (kb-forge ships only synthetic fixtures under tests/fixtures/)
+_attachments/
+attachments_src/
+raw/
+archive/
+cases/
+wiki/
+kb_chat/
+inbox/
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── OS ──
+.DS_Store
+Thumbs.db

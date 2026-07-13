@@ -1,0 +1,15 @@
+# Normalize line endings to LF on checkout/commit to avoid Windows CRLF diff noise.
+* text=auto eol=lf
+
+# Binary assets stay binary.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.pptx binary
+*.zip binary
+
+# We avoid committing .bat (Python entry points instead), but if one appears keep CRLF.
+*.bat text eol=crlf

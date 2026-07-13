@@ -1,0 +1,23 @@
+kb-forge
+Copyright 2026 kb-forge contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+This product includes software derived from the methodology of:
+
+  * obsidian-llm-wiki (green-dalii, Apache-2.0)
+    https://github.com/green-dalii/obsidian-llm-wiki
+    We independently re-implement its algorithms (entity/concept dual pages,
+    quote-grounding, contradiction state machine, layered lint, Personalized
+    PageRank query) in Python. No source code is copied.
+
+The knowledge-base output format aligns with:
+
+  * Open Knowledge Format (OKF) v0.1 (GoogleCloudPlatform, Apache-2.0)
+    https://github.com/GoogleCloudPlatform/knowledge-catalog
+    OKF is the format contract for our wiki/case/pitfall products; it is a
+    specification, not code we depend on.
