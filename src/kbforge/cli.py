@@ -11,6 +11,8 @@ from .core import run
 from .core.exporters import get_exporter, extract_bundles
 from .core.query import query_wiki
 from .core.site import build_site, SUPPORTED_THEMES
+from .core.diff import validate_wiki, diff_wiki
+from .core.enrich import enrich_wiki, get_strategy
 from .tools import make_fixtures
 
 
@@ -112,6 +114,104 @@ def site_cmd(kb_root, wiki_dir, out, site_name, theme, build):
     written = build_site(wiki, out_dir, site_name=site_name, theme=theme, build=build)
     click.echo(f"Generated MkDocs site project -> {out_dir}")
     click.echo(f"  Next: cd {out_dir} && mkdocs serve")
+
+
+@cli.command("validate")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
+def validate_cmd(kb_root, wiki_dir, fmt):
+    """Check a built wiki against the OKF contract (type/hash/broken links)."""
+    import json
+
+    cfg = load_config(start_dir=Path.cwd())
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    violations = validate_wiki(wiki)
+    if fmt == "json":
+        click.echo(json.dumps([v.to_dict() for v in violations], ensure_ascii=False, indent=2))
+    else:
+        if not violations:
+            n_pages = len([p for p in wiki.glob("*.md") if p.name not in {"index.md", "log.md"}])
+            click.echo(f"OK: {wiki} is OKF-compliant ({n_pages} pages checked)")
+            return
+        for v in violations:
+            click.echo(f"[{v.kind}] {v.slug}: {v.detail}")
+        raise click.ClickException(f"{len(violations)} OKF violation(s) found — see above")
+
+
+@cli.command("diff")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--before", default=None, type=click.Path(path_type=Path), help="Compare against this wiki dir instead of the saved baseline snapshot.")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
+def diff_cmd(kb_root, wiki_dir, before, fmt):
+    """Detect knowledge-base drift after a re-ingest (OKF anti-drift guard)."""
+    import json
+
+    cfg = load_config(start_dir=Path.cwd())
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    report = diff_wiki(wiki, before_dir=before)
+    if fmt == "json":
+        click.echo(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+        return
+    if report.baseline_created:
+        click.echo(f"Baseline snapshot created at {wiki / '.wiki_snapshot.json'}.")
+        click.echo("Re-run after a re-ingest to see drift.")
+        return
+    lines: list[str] = []
+    if report.added:
+        lines.append(f"Added ({len(report.added)}): {', '.join(report.added)}")
+    if report.removed:
+        lines.append(f"Removed ({len(report.removed)}): {', '.join(report.removed)}")
+    if report.changed:
+        lines.append("Changed:")
+        for s, ds in report.changed.items():
+            for d in ds:
+                lines.append(f"  - {s}: {d}")
+    if report.broken_links:
+        lines.append("Broken links:")
+        for s, ts in report.broken_links.items():
+            lines.append("  - " + s + ": " + ", ".join(f"[[{t}]]" for t in ts))
+    if report.orphan_refs:
+        lines.append(f"Orphan refs ({len(report.orphan_refs)}): {', '.join(report.orphan_refs)}")
+    if report.contract_violations:
+        lines.append(f"Contract violations ({len(report.contract_violations)}):")
+        for v in report.contract_violations:
+            lines.append(f"  - [{v.kind}] {v.slug}: {v.detail}")
+    if not lines:
+        lines.append("No drift detected.")
+    click.echo("\n".join(lines))
+
+
+@cli.command("enrich")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--strategy", default="local", type=click.Choice(["local", "none"]), help="Claim extraction strategy ('none' = no-op).")
+@click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
+def enrich_cmd(kb_root, wiki_dir, strategy, fmt):
+    """Extract claim-level source anchors from a built wiki (RAG citing)."""
+    import json
+
+    cfg = load_config(start_dir=Path.cwd())
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    result = enrich_wiki(wiki, strategy=get_strategy(strategy))
+    if fmt == "json":
+        click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+    total = sum(len(v) for v in result.values())
+    if not total:
+        click.echo("(no claims extracted)")
+        return
+    for slug, claims in result.items():
+        click.echo(f"## {slug} ({len(claims)} claims)")
+        for c in claims:
+            click.echo(f"  - [{c['source_anchor']}] {c['text']}")
 
 
 def main() -> None:

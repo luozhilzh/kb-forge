@@ -64,6 +64,27 @@ All notable changes to this project are documented here. The format is based on
 - Golden tests: `test_site.py` (project emitted, links resolved, unknown slug kept
   literal, valid grouped `mkdocs.yml`, landing index, unsupported-theme guard).
 
+### Added (Phase 4 guard: enrich + diff)
+- `core/diff.py`: OKF anti-drift guard.
+  - `validate_wiki(wiki_dir)` — single-state OKF compliance (every page must
+    carry `type` + `content_hash`; every `[[wiki-link]]` must resolve).
+  - `diff_wiki(wiki_dir, before_dir=None)` — compares against a saved baseline
+    snapshot (`<wiki>/.wiki_snapshot.json`, created on first run) and reports
+    added / removed / changed pages, broken links, orphaned refs, and contract
+    violations. Re-run after each re-ingest to catch KB drift.
+  - `WikiSnapshot` / `DiffReport` / `Violation` are all serializable (`to_dict`).
+- `core/enrich.py`: local-first claim enrichment (no LLM required).
+  - `EnrichmentStrategy` ABC + `NoOpStrategy` (default) + `LocalClaimExtractor`
+    (zero-dep, deterministic sentence/claim splitter that attaches each claim's
+    `source_anchor`). An LLM strategy is a documented, OFF-by-default extension
+    point (mirrors `EmbeddingRetriever`).
+  - `enrich_wiki(wiki_dir, strategy)` returns `slug -> [claim dict]`.
+- Three new CLI commands: `kbforge validate`, `kbforge diff`, `kbforge enrich
+  [--strategy local|none]`; all support `--format json` (MCP-friendly).
+- Golden tests: `test_diff.py` + `test_enrich.py` (validation, snapshot
+  round-trip, compare add/remove/change, baseline creation; noop vs local
+  extraction, source anchor, short-sentence skip, dict shape).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
 
 ---
@@ -126,5 +147,23 @@ All notable changes to this project are documented here. The format is based on
   主题都能用（`material` 需 `mkdocs-material`）。
 - Golden 测试：`test_site.py`（生成工程、链接解析、未知 slug 保留原样、合法分组
   `mkdocs.yml`、落地页、不支持主题守卫）。
+
+### 新增（Phase 4 守卫：enrich + diff）
+- `core/diff.py`：OKF 防漂移守卫。
+  - `validate_wiki(wiki_dir)`——单态 OKF 合规校验（每页须带 `type` + `content_hash`；
+    每条 `[[wiki-link]]` 必须可解析）。
+  - `diff_wiki(wiki_dir, before_dir=None)`——与已存基线快照（`<wiki>/.wiki_snapshot.json`，
+    首次运行自动建立）对比，报告新增/删除/变更页、断链、孤儿引用、契约违规。每次
+    重抓后重跑即可抓 KB 漂移。
+  - `WikiSnapshot` / `DiffReport` / `Violation` 均可序列化（`to_dict`）。
+- `core/enrich.py`：本地优先的 claim 增强（无需 LLM）。
+  - `EnrichmentStrategy` ABC + `NoOpStrategy`（默认）+ `LocalClaimExtractor`
+    （零依赖、确定性的句子/claim 切分器，给每条 claim 附 `source_anchor`）。LLM 策略
+    是文档化的、默认 OFF 的扩展点（与 `EmbeddingRetriever` 同套路）。
+  - `enrich_wiki(wiki_dir, strategy)` 返回 `slug -> [claim dict]`。
+- 三个新 CLI：`kbforge validate`、`kbforge diff`、`kbforge enrich [--strategy
+  local|none]`；均支持 `--format json`（对 MCP 友好）。
+- Golden 测试：`test_diff.py` + `test_enrich.py`（校验、快照往返、增删改对比、基线创建；
+  noop vs 本地抽取、来源锚点、短句过滤、字典形状）。
 
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0

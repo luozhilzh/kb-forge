@@ -45,6 +45,12 @@ kbforge export --kb-root tests/fixtures/sample_kb --format md   --out cases.md
 # Build a browsable, searchable static site (MkDocs) from the compiled wiki
 kbforge site --kb-root tests/fixtures/sample_kb --out site_src
 # then: cd site_src && mkdocs serve
+
+# Guard the OKF contract and catch drift after a re-ingest
+kbforge validate --kb-root tests/fixtures/sample_kb
+kbforge diff    --kb-root tests/fixtures/sample_kb   # baseline snapshot on first run
+# Extract claim-level source anchors so RAG can cite the origin post
+kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
 ```
 
 ### Architecture
@@ -67,12 +73,14 @@ the expert package in [`expert/`](expert/expert.md).
 
 **Implemented (tested):** Phase 0 skeleton · exporters (Markdown / PPTX / HTML) ·
 delivery forms B (Skill) + Expert · retrieval (`query` / `GraphRetriever` PPR +
-BM25, embedding OFF) · publish (`site` MkDocs generator).
+BM25, embedding OFF) · publish (`site` MkDocs generator) · **`enrich`** (local
+claim anchoring; LLM strategy OFF by default) · **`diff`** (OKF anti-drift guard:
+`validate` + snapshot/diff after re-ingest).
 
-**Deferred (not in MVP):** `enrich` LLM layer (interface kept, OFF by default) ·
-`diff` contradiction / incremental guard · `dedupe` cross-post merge · five page
-types (extend with scheme / comparison) · MCP server (Phase 4; `query` output is
-already MCP-friendly). See [`docs/design.md`](docs/design.md).
+**Deferred (not in MVP):** `enrich` LLM strategy (interface implemented, OFF by
+default) · `dedupe` cross-post merge · five page types (extend with scheme /
+comparison) · MCP server (Phase 4; `query` output is already MCP-friendly). See
+[`docs/design.md`](docs/design.md).
 
 ### Compliance
 
@@ -111,6 +119,12 @@ kbforge query "RAG 评测" --kb-root tests/fixtures/sample_kb --format json
 # Browsable, searchable static site (stock MkDocs, zero extra deps)
 kbforge site --kb-root tests/fixtures/sample_kb --out site_src
 # then: cd site_src && mkdocs serve
+
+# 校验 OKF 契约、抓重抓后的漂移
+kbforge validate --kb-root tests/fixtures/sample_kb
+kbforge diff    --kb-root tests/fixtures/sample_kb   # 首次运行建基线快照
+# 抽取 claim 级来源锚点，让 RAG 能回溯原帖
+kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
 ```
 
 ### 架构
@@ -125,11 +139,12 @@ kbforge site --kb-root tests/fixtures/sample_kb --out site_src
 
 **已实现（已测试）：** Phase 0 骨架 · 导出族（Markdown / PPTX / HTML）· 交付形态 B（Skill）
 + 专家包 · 检索（`query` / `GraphRetriever` PPR + BM25，embedding OFF）· 发布
-（`site` MkDocs 生成器）。
+（`site` MkDocs 生成器）· **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）·
+**`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）。
 
-**延后（不在 MVP）：** `enrich` LLM 层（接口保留，默认 OFF）· `diff` 矛盾检测 / 增量
-守卫 · `dedupe` 跨帖合并 · 五类页面（扩 scheme / comparison）· MCP server（Phase 4；
-`query` 输出已对 MCP 友好）。详见 [`docs/design.md`](docs/design.md)。
+**延后（不在 MVP）：** `enrich` 的 LLM 策略（接口已就位，默认 OFF）· `dedupe` 跨帖合并
+· 五类页面（扩 scheme / comparison）· MCP server（Phase 4；`query` 输出已对 MCP 友好）。
+详见 [`docs/design.md`](docs/design.md)。
 
 ### 合规
 
