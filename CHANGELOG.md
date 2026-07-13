@@ -50,4 +50,18 @@ All notable changes to this project are documented here. The format is based on
 - Golden tests: `test_query.py` (tokenize bigram, GraphRetriever ranking, BM25
   fallback, registry, embedding-unconfigured guard, context shape).
 
+### Added (Phase 3 publish: MkDocs site)
+- `core/site.py`: `build_site(wiki_dir, out_dir, *, site_name, theme, build)` turns a
+  compiled wiki into a **self-contained MkDocs project**. `[[wiki-link]]` /
+  `[[wiki-link|label]]` is rewritten to a real `[label](slug.md)` link at *generate*
+  time, so the output builds with **stock MkDocs** — no custom hook, no extra
+  dependency. Emits a type-grouped `nav` + the built-in `search` plugin.
+- `site` CLI command: `kbforge site --kb-root X [--out DIR] [--site-name NAME]
+  [--theme material|readthedocs|mkdocs] [--build/--no-build]`; `--build` runs
+  `mkdocs build` only when `mkdocs` is on PATH (best-effort, never required).
+- `kbforge` itself stays MkDocs-free: the generated site is plain MkDocs, so any
+  theme the user has installed works (`material` needs `mkdocs-material`).
+- Golden tests: `test_site.py` (project emitted, links resolved, unknown slug kept
+  literal, valid grouped `mkdocs.yml`, landing index, unsupported-theme guard).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0

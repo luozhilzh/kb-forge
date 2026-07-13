@@ -14,6 +14,7 @@
 - **Organize** raw posts into a year/month archive with stable `t<topic_id>` filenames.
 - **Compile a wiki** (concept / entity / case / pitfall pages) with mechanical + optional LLM enrichment — every claim anchored to its source.
 - **Extract** cases & pitfalls into a structured `CaseBundle`, then **export** to PPT / Markdown / HTML.
+- **Publish** the wiki as a browsable, searchable **MkDocs site** — `[[wiki-link]]` is resolved at generate time, so it builds with stock MkDocs (zero extra deps).
 - **Output is OKF-compatible** (Google *Open Knowledge Format* v0.1): Markdown + YAML frontmatter, `type` required, links = knowledge graph.
 
 ### Install
@@ -40,6 +41,10 @@ kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
 kbforge export --kb-root tests/fixtures/sample_kb --format html --out cases.html
 kbforge export --kb-root tests/fixtures/sample_kb --format md   --out cases.md
 # --types controls which wiki page types become slides (default: case,pitfall,concept)
+
+# Build a browsable, searchable static site (MkDocs) from the compiled wiki
+kbforge site --kb-root tests/fixtures/sample_kb --out site_src
+# then: cd site_src && mkdocs serve
 ```
 
 ### Architecture
@@ -72,6 +77,7 @@ This repository contains **only synthetic data** under `tests/fixtures/`. Never 
 - **归档**：原始帖按年/月归档，文件名稳定为 `t<topic_id>`。
 - **编译 wiki**：概念 / 实体 / 案例 / 踩坑 四类页面，机械层 + 可选 LLM 增强，每条 claim 锚定来源。
 - **萃取**：案例/踩坑 → 结构化 `CaseBundle` → 导出 PPT / Markdown / HTML。
+- **发布站点**：把 wiki 生成可浏览、可检索的 **MkDocs 静态站**——`[[wiki-link]]` 在生成期即解析为真实链接，用原版 MkDocs 即可构建（零额外依赖）。
 - **检索（RAG 就绪）**：`query` 在编译后的 wiki 上做个性化 PageRank（`GraphRetriever`，零 embedding 依赖），可选 embedding 后端（OFF）。
 - **产物对齐 OKF**（Google *Open Knowledge Format* v0.1）：Markdown + YAML frontmatter，`type` 必填，链接即知识图谱。
 
@@ -91,6 +97,9 @@ kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
 # RAG-ready retrieval over the compiled wiki (PPR over the link graph)
 kbforge query "RAG 评测" --kb-root tests/fixtures/sample_kb --top-k 3
 kbforge query "RAG 评测" --kb-root tests/fixtures/sample_kb --format json
+# Browsable, searchable static site (stock MkDocs, zero extra deps)
+kbforge site --kb-root tests/fixtures/sample_kb --out site_src
+# then: cd site_src && mkdocs serve
 ```
 
 ### 架构

@@ -10,6 +10,7 @@ from .config import load_config
 from .core import run
 from .core.exporters import get_exporter, extract_bundles
 from .core.query import query_wiki
+from .core.site import build_site, SUPPORTED_THEMES
 from .tools import make_fixtures
 
 
@@ -92,6 +93,25 @@ def query_cmd(query_text, kb_root, wiki_dir, top_k, backend, fmt):
             click.echo("(no hits)")
         for r in results:
             click.echo(f"{r.score:.4f}  [{r.id}]  {r.snippet}")
+
+
+@cli.command("site")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--out", default=None, type=click.Path(path_type=Path), help="Output MkDocs project dir (default: <kb-root>/site_src).")
+@click.option("--site-name", default="KB Forge Wiki", help="Site title.")
+@click.option("--theme", default="material", type=click.Choice(sorted(SUPPORTED_THEMES)), help="MkDocs theme (mkdocs-material required for 'material').")
+@click.option("--build/--no-build", default=True, help="Run `mkdocs build` if mkdocs is on PATH.")
+def site_cmd(kb_root, wiki_dir, out, site_name, theme, build):
+    """Generate a browsable, searchable MkDocs site from a built wiki."""
+    cfg = load_config(start_dir=Path.cwd())
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    out_dir = Path(out) if out else (cfg.root / "site_src")
+    written = build_site(wiki, out_dir, site_name=site_name, theme=theme, build=build)
+    click.echo(f"Generated MkDocs site project -> {out_dir}")
+    click.echo(f"  Next: cd {out_dir} && mkdocs serve")
 
 
 def main() -> None:
