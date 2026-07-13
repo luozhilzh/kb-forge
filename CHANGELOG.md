@@ -15,4 +15,13 @@ All notable changes to this project are documented here. The format is based on
 - `MarkdownExporter` (minimal) demonstrating the pluggable output layer.
 - CI: dual-matrix (Ubuntu + Windows) pytest, e2e on Ubuntu only.
 
+### Added (Phase 2 exporters)
+- `extract.py`: `CaseBundle` dataclass + `extract_bundles(wiki_dir)` reads built wiki
+  pages (`type` filter, default `case/pitfall/concept`) and produces exporter-agnostic bundles.
+- `PptxExporter`: built-in minimal template (no external .pptx dependency), generates a
+  title slide + one slide per bundle via `python-pptx`.
+- `HtmlExporter`: standalone self-contained HTML, one `<section>` per bundle (HTML-escaped).
+- `export` CLI command: `kbforge export --format pptx|html|md [--types ...] [--out ...]`.
+- Golden tests: `test_exporters.py` (extract shape + pptx/html round-trip + md).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0

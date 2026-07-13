@@ -34,6 +34,12 @@ kbforge build --kb-root tests/fixtures/sample_kb             # write
 
 # Pick a stage / profile
 kbforge build --profile work --stage wiki --topic t123
+
+# Extract cases from the built wiki and export to a deliverable
+kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
+kbforge export --kb-root tests/fixtures/sample_kb --format html --out cases.html
+kbforge export --kb-root tests/fixtures/sample_kb --format md   --out cases.md
+# --types controls which wiki page types become slides (default: case,pitfall,concept)
 ```
 
 ### Architecture
@@ -75,6 +81,7 @@ pip install -e ".[dev]"
 python -m kbforge make-fixtures --out tests/fixtures/sample_kb
 kbforge build --kb-root tests/fixtures/sample_kb --dry-run
 kbforge build --kb-root tests/fixtures/sample_kb
+kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
 ```
 
 ### 架构

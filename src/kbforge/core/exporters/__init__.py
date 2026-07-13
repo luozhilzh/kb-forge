@@ -7,13 +7,26 @@ format. Add a format by subclassing :class:`BaseExporter` and registering it in
 
 from .base import BaseExporter
 from .markdown import MarkdownExporter
+from .pptx import PptxExporter
+from .html import HtmlExporter
+from .extract import CaseBundle, extract_bundles, bundles_from_pages
 
-__all__ = ["BaseExporter", "MarkdownExporter", "EXPORTERS"]
+__all__ = [
+    "BaseExporter",
+    "MarkdownExporter",
+    "PptxExporter",
+    "HtmlExporter",
+    "CaseBundle",
+    "extract_bundles",
+    "bundles_from_pages",
+    "EXPORTERS",
+]
+
 
 EXPORTERS: dict[str, type[BaseExporter]] = {
     "md": MarkdownExporter,
-    # "pptx": PptxExporter,   # Phase 2
-    # "html": HtmlExporter,   # Phase 2
+    "pptx": PptxExporter,
+    "html": HtmlExporter,
 }
 
 
