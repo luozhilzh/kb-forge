@@ -63,6 +63,17 @@ All four forms call the **same core** through the `kbforge` CLI (subprocess), pi
 the expert (see §12-⑤). The B skill lives in [`B-workbuddy-skill/`](B-workbuddy-skill/SKILL.md);
 the expert package in [`expert/`](expert/expert.md).
 
+### Status
+
+**Implemented (tested):** Phase 0 skeleton · exporters (Markdown / PPTX / HTML) ·
+delivery forms B (Skill) + Expert · retrieval (`query` / `GraphRetriever` PPR +
+BM25, embedding OFF) · publish (`site` MkDocs generator).
+
+**Deferred (not in MVP):** `enrich` LLM layer (interface kept, OFF by default) ·
+`diff` contradiction / incremental guard · `dedupe` cross-post merge · five page
+types (extend with scheme / comparison) · MCP server (Phase 4; `query` output is
+already MCP-friendly). See [`docs/design.md`](docs/design.md).
+
 ### Compliance
 
 This repository contains **only synthetic data** under `tests/fixtures/`. Never commit real posts or attachments — see [`SECURITY.md`](SECURITY.md).
@@ -109,6 +120,16 @@ kbforge site --kb-root tests/fixtures/sample_kb --out site_src
 四层薄封装都通过 `kbforge` CLI（子进程）调用同一个 core，兼容区间钉在
 `kbforge>=0.1.0,<1.0.0`（1.0 改 API 会安装即失败告警，见 §12-⑤）。B 在
 [`B-workbuddy-skill/`](B-workbuddy-skill/SKILL.md)，专家包在 [`expert/`](expert/expert.md)。
+
+### 当前状态
+
+**已实现（已测试）：** Phase 0 骨架 · 导出族（Markdown / PPTX / HTML）· 交付形态 B（Skill）
++ 专家包 · 检索（`query` / `GraphRetriever` PPR + BM25，embedding OFF）· 发布
+（`site` MkDocs 生成器）。
+
+**延后（不在 MVP）：** `enrich` LLM 层（接口保留，默认 OFF）· `diff` 矛盾检测 / 增量
+守卫 · `dedupe` 跨帖合并 · 五类页面（扩 scheme / comparison）· MCP server（Phase 4；
+`query` 输出已对 MCP 友好）。详见 [`docs/design.md`](docs/design.md)。
 
 ### 合规
 
