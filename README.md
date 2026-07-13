@@ -29,6 +29,10 @@ pip install -e ".[dev]"
 # Generate a synthetic demo knowledge base (no real data, safe to commit)
 python -m kbforge make-fixtures --out tests/fixtures/sample_kb
 
+# Or forge a *real* local archive you already downloaded (offline, no API):
+kbforge ingest-archive --source /path/to/archive --out my_kb
+#   --year 2026 --month 07   # optional slice; --limit N to cap posts
+
 # Build the wiki from a knowledge root
 kbforge build --kb-root tests/fixtures/sample_kb --dry-run   # preview
 kbforge build --kb-root tests/fixtures/sample_kb             # write
@@ -98,11 +102,13 @@ the expert package in [`expert/`](expert/expert.md).
 ### Status
 
 **Implemented (tested):** Phase 0 skeleton · exporters (Markdown / PPTX / HTML) ·
-delivery forms B (Skill) + Expert · retrieval (`query` / `GraphRetriever` PPR +
-BM25, embedding OFF) · publish (`site` MkDocs generator) · **`enrich`** (local
-claim anchoring; LLM strategy OFF by default) · **`diff`** (OKF anti-drift guard:
-`validate` + snapshot/diff after re-ingest) · **MCP server** (`kbforge mcp`,
-exposes query/export/build_site/enrich/validate/diff/build as standard MCP tools;
+delivery forms B (Skill) + Expert · **`ingest-archive`** (offline
+`LocalArchiveAdapter` — forge a real on-disk archive into a self-contained KB,
+no external API) · retrieval (`query` / `GraphRetriever` PPR + BM25, embedding
+OFF) · publish (`site` MkDocs generator) · **`enrich`** (local claim anchoring;
+LLM strategy OFF by default) · **`diff`** (OKF anti-drift guard: `validate` +
+snapshot/diff after re-ingest) · **MCP server** (`kbforge mcp`, exposes
+query/export/build_site/enrich/validate/diff/build as standard MCP tools;
 `pip install 'kbforge[mcp]'`, optional dependency, zero runtime model/vector deps).
 
 **Deferred (not in MVP):** `enrich` LLM strategy (interface implemented, OFF by
@@ -137,6 +143,9 @@ pip install -e ".[dev]"
 
 ```bash
 python -m kbforge make-fixtures --out tests/fixtures/sample_kb
+# 或锻造你已下载好的*真实*本地 archive（离线、不调 API）：
+kbforge ingest-archive --source /path/to/archive --out my_kb
+#   --year 2026 --month 07   # 可选切片；--limit N 限制帖子数
 kbforge build --kb-root tests/fixtures/sample_kb --dry-run
 kbforge build --kb-root tests/fixtures/sample_kb
 kbforge export --kb-root tests/fixtures/sample_kb --format pptx --out cases.pptx
@@ -190,11 +199,13 @@ build       # 从 kb root 编译 wiki
 ### 当前状态
 
 **已实现（已测试）：** Phase 0 骨架 · 导出族（Markdown / PPTX / HTML）· 交付形态 B（Skill）
-+ 专家包 · 检索（`query` / `GraphRetriever` PPR + BM25，embedding OFF）· 发布
-（`site` MkDocs 生成器）· **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）·
-**`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）· **MCP server**
-（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/build 暴露成标准 MCP 工具；
-`pip install 'kbforge[mcp]'`，可选依赖，运行时零模型/向量依赖）。
++ 专家包 · **`ingest-archive`**（离线 `LocalArchiveAdapter`——把你已下载的本地
+archive 锻造为自包含知识库，不调任何外部 API）· 检索（`query` / `GraphRetriever`
+PPR + BM25，embedding OFF）· 发布（`site` MkDocs 生成器）· **`enrich`**（本地
+claim 锚源；LLM 策略默认 OFF）· **`diff`**（OKF 防漂移守卫：`validate` + 重抓后
+快照对比）· **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/
+validate/diff/build 暴露成标准 MCP 工具；`pip install 'kbforge[mcp]'`，可选依赖，
+运行时零模型/向量依赖）。
 
 **延后（不在 MVP）：** `enrich` 的 LLM 策略（接口已就位，默认 OFF）· `dedupe` 跨帖合并
 · 五类页面（扩 scheme / comparison）。详见 [`docs/design.md`](docs/design.md)。

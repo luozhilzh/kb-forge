@@ -8,6 +8,7 @@ import click
 
 from .config import load_config
 from .core import run
+from .core.archive_ingest import ingest_archive
 from .core.exporters import get_exporter, extract_bundles
 from .core.query import query_wiki
 from .core.site import build_site, SUPPORTED_THEMES
@@ -229,6 +230,21 @@ def mcp_cmd(transport):
         run_server(transport=transport)
     except ImportError as exc:
         raise click.ClickException(str(exc))
+
+
+@cli.command("ingest-archive")
+@click.option("--source", required=True, type=click.Path(path_type=Path), help="Root of the local archive (e.g. .../archive holding <year>/<month>/*.md).")
+@click.option("--out", required=True, type=click.Path(path_type=Path), help="New knowledge-base root to create (self-contained copy + wiki).")
+@click.option("--year", default=None, help="Filter to a year (e.g. 2026).")
+@click.option("--month", default=None, help="Filter to a month 01-12 (use with --year).")
+@click.option("--limit", default=None, type=int, help="Cap number of posts ingested.")
+@click.option("--dry-run", is_flag=True, help="Compute but do not write files.")
+def ingest_archive_cmd(source, out, year, month, limit, dry_run):
+    """Ingest a local archive of posts into a self-contained KB (offline)."""
+    report = ingest_archive(
+        source, out, year=year, month=month, limit=limit, dry_run=dry_run
+    )
+    click.echo(report)
 
 
 def main() -> None:

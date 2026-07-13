@@ -42,6 +42,7 @@ LLM_API_KEY=...
 | command | purpose |
 |---|---|
 | `make-fixtures --out <dir>` | generate a synthetic demo KB (no real data) |
+| `ingest-archive --source <archive> --out <kb-root> [--year 2026] [--month 07] [--limit N] [--dry-run]` | forge a **real on-disk archive** into a self-contained KB (offline, no API) |
 | `build --kb-root <dir> [--dry-run] [--stage ...] [--topic t123] [--profile ...]` | compile the OKF wiki |
 | `export --kb-root <dir> --format pptx\|html\|md [--out <file>] [--types case,pitfall,concept]` | extract `CaseBundle`s and render |
 | `query "<text>" [--top-k N] [--backend graph\|embedding] [--format text\|json]` | RAG-ready retrieval (PPR over the link graph) |
@@ -114,6 +115,7 @@ LLM_API_KEY=...
 | 命令 | 用途 |
 |---|---|
 | `make-fixtures --out <dir>` | 生成合成演示知识库（无真实数据） |
+| `ingest-archive --source <archive> --out <kb-root> [--year 2026] [--month 07] [--limit N] [--dry-run]` | 把**真实本机 archive** 锻造为自包含 KB（离线、不调 API） |
 | `build --kb-root <dir> [--dry-run] [--stage ...] [--topic t123] [--profile ...]` | 编译 OKF wiki |
 | `export --kb-root <dir> --format pptx\|html\|md [--out <file>] [--types case,pitfall,concept]` | 萃取 `CaseBundle` 并渲染 |
 | `query "<文本>" [--top-k N] [--backend graph\|embedding] [--format text\|json]` | RAG 就绪检索 |

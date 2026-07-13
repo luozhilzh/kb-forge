@@ -1,6 +1,7 @@
 """Platform adapters. Import the one you need; add new ones as subclasses of base.PlatformAdapter."""
 
 from .base import Attachment, FetchResult, PlatformAdapter, Topic
+from .local_archive import LocalArchiveAdapter
 from .mock import MockAdapter
 from .zsxq import ZsxqAdapter
 
@@ -9,6 +10,7 @@ __all__ = [
     "FetchResult",
     "PlatformAdapter",
     "Topic",
+    "LocalArchiveAdapter",
     "MockAdapter",
     "ZsxqAdapter",
 ]
@@ -16,6 +18,7 @@ __all__ = [
 # Registry used by config.platform -> adapter class.
 ADAPTERS: dict[str, type[PlatformAdapter]] = {
     "zsxq": ZsxqAdapter,
+    "local-archive": LocalArchiveAdapter,
     # "wechat": WechatAdapter,  # see example_wechat.py
 }
 

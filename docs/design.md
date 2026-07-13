@@ -68,9 +68,11 @@ src/kbforge/
 │   ├── base.py             # PlatformAdapter ABC (fetch_topics/download_attachment/paginate)
 │   ├── mock.py             # MockAdapter (tests)
 │   ├── zsxq.py             # Zsxq adapter (wraps zsxq-cli)
+│   ├── local_archive.py    # LocalArchiveAdapter (offline: reads an on-disk archive)
 │   └── example_wechat.py   # skeleton adapter (no dead code, documents the interface)
 ├── core/
 │   ├── pipeline.py         # run(): orchestrates ingest -> build_index
+│   ├── archive_ingest.py   # ingest_archive(): local archive -> self-contained KB
 │   ├── wiki/
 │   │   ├── ingest.py       # post -> OKF wiki page (content_hash over body-only)
 │   │   ├── build_index.py  # wiki/*.md -> index.md + .graph.json + .backlinks.json
@@ -227,6 +229,40 @@ stdio|sse]` 懒加载该 server，故 CLI 自身绝不依赖 `mcp`。
 **运行时零模型/向量成本。** server 包装的与 CLI/B/Expert 是同一套零依赖本地工具——绝不碰
 外部 LLM 或向量库。即使以 agent 工具形态被消费，「本地优先、外部模型后置」原则依然成立。
 
+## 7.7 Real-data ingest: LocalArchiveAdapter / 真实 archive 接入
+
+The bridge from "synthetic fixtures" to "your real community posts". You already
+have a downloaded archive on disk; `LocalArchiveAdapter` turns it into a
+self-contained KB **without touching any platform API** (no zsxq-cli, no token).
+
+- `LocalArchiveAdapter(root)` reads `<year>/<month>/<date>-t<topic_id>.md` posts,
+  cleans zsxq inline `<e .../>` tags, derives the numeric `topic_id` from the
+  filename, and maps frontmatter (`title`/`author`/`date`/`tags`) into `Topic`
+  objects. `scan(year, month, limit)` slices the archive.
+- `ingest_archive(source, out, *, year, month, limit, dry_run)` writes normalized
+  OKF posts into `<out>/archive/<year>/<month>/`, seeds `SCHEMA.md` with the
+  discovered tags, then calls `run()` to compile the wiki. The output is
+  byte-for-byte the same layout `make-fixtures` produces, so `query` / `site` /
+  `export` / `enrich` / `diff` / `mcp` all work unchanged.
+- CLI: `kbforge ingest-archive --source <archive> --out <kb-root> [--year 2026]
+  [--month 07] [--limit N] [--dry-run]`.
+- Real posts carry no `[[wiki-link]]`, so the link graph has no edges; `query`
+  transparently falls back to BM25 (lexical) retrieval — no extra setup.
+
+**真实数据接入：LocalArchiveAdapter。** 把工具从「合成 fixtures 验证」变成「真正整理你自己的
+社群帖」的桥。你本机已下载好 archive，`LocalArchiveAdapter` 把它变成自包含 KB，**不碰任何平台
+API**（不调 zsxq-cli、不需要 token）。
+
+- `LocalArchiveAdapter(root)` 读 `<year>/<month>/<date>-t<topic_id>.md` 帖，清洗 zsxq 的
+  `<e .../>` 内联标签，从文件名抽数字 `topic_id`，把 frontmatter（`title`/`author`/`date`/`tags`）
+  映射成 `Topic`。`scan(year, month, limit)` 可切片。
+- `ingest_archive(source, out, *, year, month, limit, dry_run)` 把归一化 OKF 帖写入
+  `<out>/archive/<year>/<month>/`，用扫描到的标签自动播种 `SCHEMA.md`，再调 `run()` 编译 wiki。
+  产物与 `make-fixtures` 字节级同构，故 `query`/`site`/`export`/`enrich`/`diff`/`mcp` 原样可用。
+- CLI：`kbforge ingest-archive --source <archive> --out <kb-root> [--year 2026]
+  [--month 07] [--limit N] [--dry-run]`。
+- 真实帖不含 `[[wiki-link]]`，故链接图无边；`query` 自动退 BM25（词法）检索——无需额外配置。
+
 ## 8. Compatibility pin / 兼容区间
 
 All thin shells (B, Expert) declare `kbforge>=0.1.0,<1.0.0`. The upper bound
@@ -258,6 +294,8 @@ surface B / the expert invoke.
 - Delivery forms B (Skill) + Expert package.
 - Retrieval: `query` / `GraphRetriever` (PPR) + BM25 + EmbeddingRetriever (OFF).
 - Publish: `site` / MkDocs generator.
+- **Real-data ingest:** `LocalArchiveAdapter` (offline) + `ingest_archive`
+  (archive on disk -> self-contained KB; no platform API).
 - **`enrich`** (local claim anchoring; LLM strategy OFF by default).
 - **`diff`** (OKF anti-drift guard: `validate` + snapshot/diff after re-ingest).
 - **MCP server** (`kbforge mcp`, exposes query/export/build_site/enrich/validate/
@@ -275,6 +313,8 @@ surface B / the expert invoke.
 - 交付形态 B（Skill）+ 专家包。
 - 检索：`query` / `GraphRetriever`（PPR）+ BM25 + EmbeddingRetriever（OFF）。
 - 发布：`site` / MkDocs 生成器。
+- **真实数据接入**：`LocalArchiveAdapter`（离线）+ `ingest_archive`（本机 archive
+  → 自包含 KB；不调平台 API）。
 - **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）。
 - **`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）。
 - **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/

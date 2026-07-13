@@ -103,6 +103,26 @@ All notable changes to this project are documented here. The format is based on
   enrich/diff/export/build_site/build; plus a registration guard that asserts
   all 7 tool names are wired up, skipped where `mcp` is not installed).
 
+### Added (real-data: local archive ingest)
+- `adapters/local_archive.py`: `LocalArchiveAdapter` — reads an on-disk archive
+  (`<year>/<month>/<date>-t<topic_id>.md`) **offline**, with no external API.
+  It cleans zsxq inline `<e .../>` tags, derives the numeric `topic_id` from the
+  filename, maps frontmatter (`title`/`author`/`date`/`tags`) into `Topic`
+  objects, and supports `scan(year, month, limit)` filtering. Registered as the
+  `local-archive` platform in `ADAPTERS`.
+- `core/archive_ingest.py`: `ingest_archive(source, out, *, year, month, limit,
+  dry_run)` — the end-to-end offline path. It writes normalized OKF posts into
+  `<out>/archive/<year>/<month>/` (replicating the source layout), seeds
+  `SCHEMA.md` with the discovered tags (so validation stays quiet), then calls
+  `run()` to compile the wiki. Output is a self-contained KB root identical to
+  `make-fixtures`, so every downstream stage works unchanged.
+- `ingest-archive` CLI command: `kbforge ingest-archive --source <archive>
+  --out <kb-root> [--year 2026] [--month 07] [--limit N] [--dry-run]`. Offline;
+  no credentials, no network.
+- Golden tests: `test_local_archive.py` (adapter scan/clean/tag-derive, year/
+  month/limit filters, end-to-end wiki build with no inline tags, auto-seeded
+  SCHEMA tags, dry-run writes nothing).
+
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
 
 ---
@@ -197,5 +217,20 @@ All notable changes to this project are documented here. The format is based on
 - `mcp` 加入 `[project.optional-dependencies]` 及 `dev` extra，使 CI 覆盖注册守卫。
 - Golden 测试：`test_mcp.py`（在已编译 wiki 上的工具函数——query/validate/enrich/diff/
   export/build_site/build；外加注册守卫断言 7 个工具名全部接上，未装 `mcp` 时跳过）。
+
+### 新增（真实数据：本地 archive 接入）
+- `adapters/local_archive.py`：`LocalArchiveAdapter`——**离线**读取本机 archive
+  （`<year>/<month>/<date>-t<topic_id>.md`），不调任何外部 API。清洗 zsxq 的 `<e .../>`
+  内联标签、从文件名抽数字 `topic_id`、把 frontmatter（`title`/`author`/`date`/`tags`）
+  映射成 `Topic`，并支持 `scan(year, month, limit)` 切片过滤。已注册为 `local-archive` 平台。
+- `core/archive_ingest.py`：`ingest_archive(source, out, *, year, month, limit,
+  dry_run)`——离线端到端路径。把归一化 OKF 帖写入 `<out>/archive/<year>/<month>/`
+  （复刻源目录结构），用扫描到的标签自动播种 `SCHEMA.md`（让校验静默），再调 `run()`
+  编译 wiki。产物是和 `make-fixtures` 同构的自包含 KB root，下游所有阶段原样可用。
+- `ingest-archive` CLI 命令：`kbforge ingest-archive --source <archive>
+  --out <kb-root> [--year 2026] [--month 07] [--limit N] [--dry-run]`。离线；
+  无凭证、无网络。
+- Golden 测试：`test_local_archive.py`（适配器 scan/清洗/抽 id、year/month/limit
+  过滤、端到端 wiki 构建且无内联标签、自动播种 SCHEMA 标签、dry-run 不落盘）。
 
 [0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
