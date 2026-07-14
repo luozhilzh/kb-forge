@@ -211,6 +211,30 @@ it reaches RAG. All report types expose `to_dict()` for MCP-friendly output.
 断链、孤儿引用、契约违规。每次重抓后重跑，即可在漂移进入 RAG 前抓住。所有报告类型均提供
 `to_dict()` 以对 MCP 友好。
 
+## 7.5.1 Dedupe / 跨源去重
+
+**`dedupe` — non-destructive duplicate detection (local-first).**
+`dedupe_pages(pages_dir, strategy)` recursively scans every `*.md` page (except
+`index.md` / `log.md` / `SCHEMA.md`), groups them by a body-only sha256
+`content_hash` (the same normalization `wiki/ingest` uses, so cross-layer hashes
+match), and for each collision marks redundant pages with
+`duplicate_of: <canonical-slug>`. The canonical page is the earliest
+`published_at` (tie-broken by slug). Every page also gets its `content_hash`
+filled in if missing. Default strategy `mark` is zero-dependency and never edits
+a body or deletes a file — it only appends/updates frontmatter. A `merge`
+strategy (physically collapse / relocate duplicates) is a documented,
+OFF-by-default extension point, kept off the MVP so user data is never
+auto-removed.
+
+**`dedupe` —— 跨源去重（本地优先、非破坏）。**
+`dedupe_pages(pages_dir, strategy)` 递归扫描每个 `*.md` 页（跳过 `index.md` /
+`log.md` / `SCHEMA.md`），按正文-only 的 sha256 `content_hash`（与 `wiki/ingest`
+同源归一化，跨层哈希一致）分组；同一哈希的多页即重复，给冗余页标
+`duplicate_of: <canonical-slug>`。canonical 取 `published_at` 最早者（slug 字典序
+兜底），缺 `content_hash` 的页自动补上。默认 `mark` 策略零依赖、永不正文、永不删
+文件——只追加/更新 frontmatter。物理合并的 `merge` 策略是默认 OFF 的扩展点，MVP 不接，
+以免误删用户数据。
+
 ## 7.6 MCP server / MCP 服务
 
 The product closure of the RAG pipeline. `src/kbforge/mcp_server.py` exposes the

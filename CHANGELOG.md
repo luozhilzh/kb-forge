@@ -22,6 +22,21 @@ All notable changes to this project are documented here. The format is based on
     real run writes `type` back and rebuilds `index.md`.
   - `ClassifyConfig` lives in a leaf module to avoid a core↔config import cycle.
 
+- **`dedupe`** command + cross-source duplicate detection (feature ④): collapses
+  repeats pulled from a platform (re-shares, cross-group reposts, double captures)
+  without touching user data.
+  - `dedupe_pages(dir)`: recursively scans `*.md`, groups pages by a sha256 of the
+    normalized **body only** (same normalization as `wiki/ingest.content_hash`, so
+    cross-layer hashes match), and for each collision marks redundant pages with
+    `duplicate_of: <canonical-slug>`; the canonical is the earliest `published_at`
+    (tie-broken by slug). Every page also gets a `content_hash` filled in if missing.
+  - `mark` strategy (default): **non-destructive** — only frontmatter metadata is
+    appended/updated, bodies are never edited and files are never removed.
+  - `merge` (physically collapse/relocate duplicates) is a documented, OFF-by-default
+    extension point, intentionally left out of the MVP so callers never lose data.
+  - `dedupe <dir> --dry-run` previews the report (total / unique / duplicate groups /
+    duplicates / to_write) as JSON.
+
 ### Fixed
 - `frontmatter.parse` now tolerates archive titles starting with YAML illegal
   indicators (`@`, `#`) by auto-quoting the offending scalar line, instead of

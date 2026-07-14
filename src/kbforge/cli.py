@@ -15,6 +15,7 @@ from .core.site import build_site, SUPPORTED_THEMES
 from .core.diff import validate_wiki, diff_wiki
 from .core.enrich import enrich_wiki, get_strategy
 from .core.classify import classify_wiki
+from .core.dedupe import dedupe_pages
 from .tools import make_fixtures
 
 
@@ -282,6 +283,29 @@ def ingest_archive_cmd(source, out, year, month, limit, dry_run):
         source, out, year=year, month=month, limit=limit, dry_run=dry_run
     )
     click.echo(report)
+
+
+@cli.command("dedupe")
+@click.argument("dir", type=click.Path(path_type=Path, exists=True), required=True)
+@click.option("--strategy", default="mark", type=click.Choice(["mark"]), help="Dedupe strategy. 'mark' (default) annotates duplicates non-destructively; 'merge' is a documented OFF-by-default extension point.")
+@click.option("--dry-run", is_flag=True, help="Report duplicates without writing anything.")
+def dedupe_cmd(dir, strategy, dry_run):
+    """Detect & mark duplicate pages under DIR (recursive, body-only content_hash).
+
+    Scans every *.md page (except index.md/log.md/SCHEMA.md), groups them by a
+    sha256 of the normalized body, and for each collision marks the redundant
+    pages with ``duplicate_of: <canonical-slug>``. The canonical page is the one
+    with the earliest ``published_at`` (tie-broken by slug). Non-destructive:
+    only frontmatter metadata is added/updated, bodies are never edited.
+    """
+    import json
+
+    report = dedupe_pages(dir, strategy_name=strategy, dry_run=dry_run)
+    click.echo(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    if dry_run:
+        click.echo("(dry-run) No files written.")
+    else:
+        click.echo(f"Annotated {report.duplicates} duplicate page(s) across {report.duplicate_groups} group(s); {report.to_write} file(s) written.")
 
 
 def main() -> None:

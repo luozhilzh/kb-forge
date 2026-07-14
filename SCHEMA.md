@@ -54,9 +54,10 @@ published_at: 2026-07-01
 
 ## 4. `content_hash`
 
-- 计算对象 = **正文 body-only**（剥去易变的 frontmatter，改时间戳不误报）。
+- 计算对象 = **正文 body-only**（剥去易变的 frontmatter，改时间戳不误报；归一化为空白折叠后 sha256，前缀 `sha256:`）。
 - 在 `ingest` 落盘前计算；用于跨平台去重、变更检测、幂等跳过。
 - `content_hash` 变化会触发 `diff` 重跑。
+- **`dedupe` 据此去重**：递归扫描目录下所有 `*.md`，按 `content_hash` 分组；同一 hash 的多页即重复（同源/转载/重复抓取）。默认 `mark` 策略**非破坏**——重复页加 `duplicate_of: <canonical-slug>` 字段、canonical 取 `published_at` 最早者（slug 字典序兜底），正文永不改动、文件永不删除。`merge` 策略（物理合并/移除）为默认 OFF 的扩展点。
 
 ## 5. 校验（OKF 防漂移守卫）
 

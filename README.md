@@ -61,6 +61,9 @@ kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
 kbforge classify --kb-root tests/fixtures/sample_kb --strategy local   # --dry-run to preview
 #   then export/query/site consume the typed pages generically
 
+# Detect & mark duplicate pages by body hash (non-destructive, local-first)
+kbforge dedupe tests/fixtures/sample_kb/wiki   # add --dry-run to preview
+
 # Expose everything as standard MCP tools for any LLM agent (RAG closure)
 pip install 'kbforge[mcp]'
 kbforge mcp                 # stdio server (default for local agents)
@@ -115,12 +118,17 @@ LLM strategy OFF by default) · **`diff`** (OKF anti-drift guard: `validate` +
 snapshot/diff after re-ingest) · **`classify`** (OKF five-class auto-classification:
 `concept/entity/case/pitfall/scheme/comparison/post`; local-first zero-dep
 scorer + optional LLM enhancement; type set & lexicon user-configurable) ·
+**`dedupe`** (cross-source duplicate detection: groups pages by body-only
+`content_hash`, marks redundant pages with `duplicate_of` non-destructively;
+local-first, zero-dep, `mark` strategy default) ·
 **MCP server** (`kbforge mcp`, exposes
 query/export/build_site/enrich/validate/diff/build/classify as standard MCP tools;
 `pip install 'kbforge[mcp]'`, optional dependency, zero runtime model/vector deps).
 
-**Deferred (not in MVP):** `enrich` LLM strategy (interface implemented, OFF by
-default) · `dedupe` cross-post merge. See [`docs/design.md`](docs/design.md).
+**Optional extensions (OFF by default):** `enrich` LLM strategy (interface
+implemented, activates only when an API key is configured) · `dedupe` `merge`
+strategy (physically collapse/relocate duplicates — a documented extension point,
+kept off so user data is never auto-deleted). See [`docs/design.md`](docs/design.md).
 
 ### Compliance
 
@@ -173,6 +181,9 @@ kbforge enrich  --kb-root tests/fixtures/sample_kb --strategy local
 kbforge classify --kb-root tests/fixtures/sample_kb --strategy local   # --dry-run 先预览
 #   之后 export/query/site 就能以「类型」为维度通用消费
 
+# 按正文哈希检测并标注重复页面（非破坏、本地优先）
+kbforge dedupe tests/fixtures/sample_kb/wiki   # 加 --dry-run 先预览
+
 # 把全部能力暴露成标准 MCP 工具，让任意 LLM agent 直接调用（RAG 闭环）
 pip install 'kbforge[mcp]'
 kbforge mcp                 # stdio 服务（本地 agent 默认）
@@ -216,11 +227,14 @@ PPR + BM25，embedding OFF）· 发布（`site` MkDocs 生成器）· **`enrich`
 claim 锚源；LLM 策略默认 OFF）· **`diff`**（OKF 防漂移守卫：`validate` + 重抓后
 快照对比）· **`classify`**（OKF 五类自动归类：`concept/entity/case/pitfall/
 scheme/comparison/post`；本地优先零依赖打分 + 可选 LLM 增强；类型集与词典用户可配）·
+**`dedupe`**（跨源去重：按正文 `content_hash` 分组，非破坏地给重复页标 `duplicate_of`；
+本地优先、零依赖，默认 `mark` 策略）·
 **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/
 build/classify 暴露成标准 MCP 工具；`pip install 'kbforge[mcp]'`，可选依赖，
 运行时零模型/向量依赖）。
 
-**延后（不在 MVP）：** `enrich` 的 LLM 策略（接口已就位，默认 OFF）· `dedupe` 跨帖合并。
+**可选扩展（默认 OFF）：** `enrich` 的 LLM 策略（接口已就位，仅配置 API key 后激活）·
+`dedupe` 的 `merge` 策略（物理合并/移除重复页——文档化扩展点，默认关闭以免误删用户数据）。
 详见 [`docs/design.md`](docs/design.md)。
 
 ### 合规
