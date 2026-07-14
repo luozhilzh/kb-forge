@@ -22,6 +22,12 @@ All notable changes to this project are documented here. The format is based on
     real run writes `type` back and rebuilds `index.md`.
   - `ClassifyConfig` lives in a leaf module to avoid a core↔config import cycle.
 
+- **Richer `sample_kb` demo fixture** (`tests/fixtures/sample_kb/archive`): expanded
+  from 3 to 9 synthetic posts so the bundled KB now exercises **all seven** OKF
+  types (`case/pitfall/scheme/comparison/concept/entity/post`). The e2e test now
+  also asserts the sample covers the six main typed classes, so a regression that
+  shrinks the demo's type coverage fails CI.
+
 - **End-to-end pipeline test** (`tests/test_e2e_pipeline.py`): forges the bundled
   `sample_kb` archive from scratch and asserts the full
   `ingest-archive → classify → enrich → export → query → validate` chain produces

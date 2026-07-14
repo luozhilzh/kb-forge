@@ -62,6 +62,13 @@ def test_e2e_pipeline(tmp_path: Path) -> None:
     assert any(t != "post" for t in cls["distribution"]), (
         "classifier assigned no typed class — pipeline produces only 'post'"
     )
+    # the bundled sample_kb must exercise the main OKF types, so an outsider
+    # cloning the repo sees a representative demo KB (not just one or two).
+    expected_types = {"case", "pitfall", "scheme", "comparison", "concept", "entity"}
+    assert expected_types.issubset(set(cls["distribution"])), (
+        f"sample_kb should cover the main OKF types; missing: "
+        f"{expected_types - set(cls['distribution'])}"
+    )
 
     # 3) enrich: extract claim-level source anchors (local, zero-dep)
     claims = enrich_wiki(wiki, strategy=get_enrich_strategy("local"))
