@@ -135,6 +135,7 @@ def load_config(
     profile: str | None = None,
     env_path: Path | None = None,
     start_dir: Path | None = None,
+    require: bool = True,
 ) -> KbForgeConfig:
     """Load configuration from a YAML file + ``.env`` secrets.
 
@@ -144,9 +145,14 @@ def load_config(
     start_dir = start_dir or Path.cwd()
     cfg_file = _find_config_file(config_path, profile, start_dir)
     if cfg_file is None:
+        if not require:
+            # Self-contained wiki: operate without a project config file.
+            return KbForgeConfig(root=start_dir)
+        looked = "config.yaml / config.default.yaml"
+        if profile:
+            looked += f" / config.{profile}.yaml"
         raise FileNotFoundError(
-            f"No kb-forge config found in {start_dir} (looked for config.yaml / "
-            f"config.default.yaml / config.{profile}.yaml)"
+            f"No kb-forge config found in {start_dir} (looked for {looked})"
         )
     with open(cfg_file, "r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}

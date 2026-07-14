@@ -52,15 +52,17 @@ def build_cmd(kb_root, profile, stage, topic, dry_run) -> None:
 
 @cli.command("export")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--format", "fmt", default="pptx", type=click.Choice(["md", "pptx", "html"]), help="Output format.")
 @click.option("--out", default=None, type=click.Path(path_type=Path), help="Output path (extension auto-corrected).")
 @click.option("--types", default="case,pitfall,concept", help="Comma list of wiki page types to include.")
 def export_cmd(kb_root, wiki_dir, fmt, out, types):
     """Extract case bundles from a built wiki and render them to a format."""
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     wanted = {t.strip() for t in types.split(",") if t.strip()}
     bundles = extract_bundles(wiki, types=frozenset(wanted))
@@ -75,7 +77,7 @@ def export_cmd(kb_root, wiki_dir, fmt, out, types):
 @cli.command("query")
 @click.argument("query_text")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--top-k", default=5, type=int, help="Max number of hits.")
 @click.option("--backend", default=None, type=click.Choice(["graph", "embedding"]), help="Retriever backend (default: from config).")
 @click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
@@ -83,9 +85,11 @@ def query_cmd(query_text, kb_root, wiki_dir, top_k, backend, fmt):
     """Retrieve relevant wiki pages for a query (RAG-ready)."""
     import json
 
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     backend = backend or cfg.query.backend
     results = query_wiki(wiki, query_text, top_k=top_k, backend=backend)
@@ -100,16 +104,18 @@ def query_cmd(query_text, kb_root, wiki_dir, top_k, backend, fmt):
 
 @cli.command("site")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--out", default=None, type=click.Path(path_type=Path), help="Output MkDocs project dir (default: <kb-root>/site_src).")
 @click.option("--site-name", default="KB Forge Wiki", help="Site title.")
 @click.option("--theme", default="material", type=click.Choice(sorted(SUPPORTED_THEMES)), help="MkDocs theme (mkdocs-material required for 'material').")
 @click.option("--build/--no-build", default=True, help="Run `mkdocs build` if mkdocs is on PATH.")
 def site_cmd(kb_root, wiki_dir, out, site_name, theme, build):
     """Generate a browsable, searchable MkDocs site from a built wiki."""
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     out_dir = Path(out) if out else (cfg.root / "site_src")
     written = build_site(wiki, out_dir, site_name=site_name, theme=theme, build=build)
@@ -119,15 +125,17 @@ def site_cmd(kb_root, wiki_dir, out, site_name, theme, build):
 
 @cli.command("validate")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
 def validate_cmd(kb_root, wiki_dir, fmt):
     """Check a built wiki against the OKF contract (type/hash/broken links)."""
     import json
 
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     violations = validate_wiki(wiki)
     if fmt == "json":
@@ -144,16 +152,18 @@ def validate_cmd(kb_root, wiki_dir, fmt):
 
 @cli.command("diff")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--before", default=None, type=click.Path(path_type=Path), help="Compare against this wiki dir instead of the saved baseline snapshot.")
 @click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
 def diff_cmd(kb_root, wiki_dir, before, fmt):
     """Detect knowledge-base drift after a re-ingest (OKF anti-drift guard)."""
     import json
 
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     report = diff_wiki(wiki, before_dir=before)
     if fmt == "json":
@@ -190,16 +200,18 @@ def diff_cmd(kb_root, wiki_dir, before, fmt):
 
 @cli.command("enrich")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
-@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
 @click.option("--strategy", default="local", type=click.Choice(["local", "none"]), help="Claim extraction strategy ('none' = no-op).")
 @click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
 def enrich_cmd(kb_root, wiki_dir, strategy, fmt):
     """Extract claim-level source anchors from a built wiki (RAG citing)."""
     import json
 
-    cfg = load_config(start_dir=Path.cwd())
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
         cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
     result = enrich_wiki(wiki, strategy=get_strategy(strategy))
     if fmt == "json":

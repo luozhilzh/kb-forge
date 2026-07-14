@@ -120,3 +120,31 @@ def test_ingest_archive_dry_run_writes_nothing(tmp_path: Path) -> None:
     report = ingest_archive(arch, out, dry_run=True)
     assert report["dry_run"] is True
     assert not out.exists() or not any(out.iterdir())
+
+
+def test_parse_tolerates_illegal_indicator_titles() -> None:
+    """Real archive posts may carry unquoted titles starting with a YAML
+    indicator (a mention ``@caucy`` or a hashtag ``#评论回复``). These must be
+    preserved as strings — not raise ScannerError and not be silently dropped
+    as a comment.
+    """
+    doc_at = (
+        "---\n"
+        "title: @caucy 关于如何在Dify中落地RAG\n"
+        "author: 韦东东\n"
+        "tags: [RAG/知识库, 大模型/训练]\n"
+        "---\n\n正文\n"
+    )
+    meta_at, _ = parse(doc_at)
+    assert meta_at["title"] == "@caucy 关于如何在Dify中落地RAG"
+    assert meta_at["author"] == "韦东东"
+    assert set(meta_at["tags"]) == {"RAG/知识库", "大模型/训练"}
+
+    doc_hash = (
+        "---\n"
+        "title: #评论回复 @caucy 如果在一个知识库有的…\n"
+        "author: 韦东东\n"
+        "---\n\n正文\n"
+    )
+    meta_hash, _ = parse(doc_hash)
+    assert meta_hash["title"] == "#评论回复 @caucy 如果在一个知识库有的…"
