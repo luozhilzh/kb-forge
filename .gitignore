@@ -13,6 +13,8 @@ cases/
 wiki/
 kb_chat/
 inbox/
+# but the synthetic test fixture MUST ship so e2e runs on a clean clone
+!tests/fixtures/sample_kb/archive/
 
 # ── Python ──
 __pycache__/
