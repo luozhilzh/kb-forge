@@ -22,6 +22,12 @@ All notable changes to this project are documented here. The format is based on
     real run writes `type` back and rebuilds `index.md`.
   - `ClassifyConfig` lives in a leaf module to avoid a core↔config import cycle.
 
+- **End-to-end pipeline test** (`tests/test_e2e_pipeline.py`): forges the bundled
+  `sample_kb` archive from scratch and asserts the full
+  `ingest-archive → classify → enrich → export → query → validate` chain produces
+  a structured, queryable, OKF-compliant KB. Pure-local (no network / API / key),
+  so it runs on every CI push and closes the integration gap unit tests miss.
+
 - **`dedupe`** command + cross-source duplicate detection (feature ④): collapses
   repeats pulled from a platform (re-shares, cross-group reposts, double captures)
   without touching user data.

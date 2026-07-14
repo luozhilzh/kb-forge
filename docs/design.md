@@ -367,8 +367,11 @@ surface B / the expert invoke.
 - **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/
   build 暴露成标准 MCP 工具；`mcp` 为可选依赖，运行时零模型/向量成本）。
 
-**延后（不在 MVP）：**
-- `dedupe` 的 `merge` 策略（物理合并/移除重复页——文档化扩展点，默认 OFF）。
+**延后 / OFF-by-default（扩展点）：**
+- `dedupe` 的 `merge` 策略（物理合并/移除重复页——文档化扩展点，默认 OFF 以免误删用户数据）。
 - `EmbeddingRetriever`（可选向量后端，默认 OFF）。
-- `dedupe` 跨帖合并。
-- 五类页面（在 concept/entity/case/pitfall 基础上扩 scheme/comparison）。
+- `enrich` 的 `llm` 策略（接口与实现已就位，默认 OFF，缺 key/出错透明回退 local）。
+
+注：五类页面（`concept/entity/case/pitfall/scheme/comparison` + 兜底 `post`）已由
+`classify` 实现并可在 `config.yaml` 自定义类型集/词典。端到端集成测试覆盖
+`ingest → classify → enrich → export → query → validate` 全链。

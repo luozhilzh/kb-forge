@@ -70,6 +70,13 @@ kbforge mcp                 # stdio server (default for local agents)
 # kbforge mcp --transport sse   # for remote agents
 ```
 
+### Tests
+
+`pytest` runs the whole suite — **pure-local, no network / platform API / model
+key required**. The end-to-end test forges the bundled `tests/fixtures/sample_kb`
+from scratch and asserts the full `ingest → classify → enrich → export → query →
+validate` chain yields a structured, queryable, OKF-compliant KB.
+
 ### MCP server (agent-native delivery)
 
 All the tools above are also exposed as standard **MCP** tools, so an LLM agent
@@ -189,6 +196,13 @@ pip install 'kbforge[mcp]'
 kbforge mcp                 # stdio 服务（本地 agent 默认）
 # kbforge mcp --transport sse   # 远程 agent 用 sse
 ```
+
+### 测试
+
+`pytest` 跑全套——**纯本地，无需网络 / 平台 API / 模型 key**。端到端测试会就地把
+打包的 `tests/fixtures/sample_kb` 从零锻造出来，并断言完整链路
+`ingest → classify → enrich → export → query → validate` 产出结构化、可检索、符合
+OKF 契约的知识库。
 
 ### MCP server（agent 原生交付形态）
 
