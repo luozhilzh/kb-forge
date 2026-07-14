@@ -14,6 +14,7 @@ from .core.query import query_wiki
 from .core.site import build_site, SUPPORTED_THEMES
 from .core.diff import validate_wiki, diff_wiki
 from .core.enrich import enrich_wiki, get_strategy
+from .core.classify import classify_wiki
 from .tools import make_fixtures
 
 
@@ -72,6 +73,30 @@ def export_cmd(kb_root, wiki_dir, fmt, out, types):
     out_path = Path(out) if out else (cfg.root / f"export{exporter.suffix}")
     written = exporter.export(bundles, out_path)
     click.echo(f"Exported {len(bundles)} bundles -> {written}")
+
+
+@cli.command("classify")
+@click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
+@click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
+@click.option("--strategy", default=None, type=click.Choice(["local", "llm"]), help="Override the strategy from config (local=default zero-dep, llm=optional).")
+@click.option("--dry-run", is_flag=True, help="Report the per-type distribution without writing.")
+def classify_cmd(kb_root, wiki_dir, strategy, dry_run):
+    """Classify wiki pages into the OKF five-class structure (concept/entity/case/pitfall/scheme/comparison/post)."""
+    cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
+    if kb_root:
+        cfg.root = Path(kb_root).resolve()
+    elif wiki_dir:
+        cfg.root = Path(wiki_dir).resolve().parent
+    wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
+    report = classify_wiki(wiki, cfg.classify, strategy_name=strategy, dry_run=dry_run)
+    dist = report["distribution"]
+    click.echo(f"Strategy: {report['strategy']}  |  total: {report['total']}  |  dry_run: {report['dry_run']}")
+    for t in sorted(dist, key=lambda k: -dist[k]):
+        click.echo(f"  {t:12s} {dist[t]}")
+    if dry_run:
+        click.echo("(dry-run) No files written.")
+    else:
+        click.echo(f"Types written to {wiki}; index.md rebuilt.")
 
 
 @cli.command("query")

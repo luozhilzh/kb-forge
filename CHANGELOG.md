@@ -4,6 +4,33 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/) and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`classify`** command + OKF five-class auto-classification (feature ③, the
+  knowledge-base *structure* layer): turns a flat pile of `post` pages into a
+  typed KB (`concept/entity/case/pitfall/scheme/comparison/post`).
+  - `LocalClassifier`: deterministic, zero-dependency scorer (tag overlap +
+    heading/structural signals + weak body cue; `entity` fires only on explicit
+    title/heading/tag naming to avoid false positives).
+  - `LLMClassifier`: optional OpenAI-compatible enhancement (stdlib `urllib`
+    only, no SDK); transparently falls back to `local` on missing key / error.
+  - Type set, lexicon and structural rules are **user-configurable** via
+    `config.yaml` → `classify:` (merged over defaults), so the product works
+    for *any* domain, not hardcoded to one.
+  - `classify --wiki-dir X --dry-run` previews the per-type distribution; the
+    real run writes `type` back and rebuilds `index.md`.
+  - `ClassifyConfig` lives in a leaf module to avoid a core↔config import cycle.
+
+### Fixed
+- `frontmatter.parse` now tolerates archive titles starting with YAML illegal
+  indicators (`@`, `#`) by auto-quoting the offending scalar line, instead of
+  crashing or silently dropping the title.
+- `export` / `query` / `site` / `validate` / `diff` / `enrich` no longer require
+  a `config.yaml` in cwd when an explicit `--wiki-dir` is given (`load_config`
+  gains a `require` flag); self-contained wikis (e.g. from `ingest-archive`)
+  run directly.
+
 ## [0.1.0] - 2026-07-13
 
 ### Added

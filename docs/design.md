@@ -112,7 +112,7 @@ raw posts ──archive/ (year/month/t<topic_id>.md)──▶ ingest ──▶ w
 
 ## 5. OKF contract / OKF 契约
 
-- Each wiki page is `type: <concept|entity|case|pitfall|post>` + `title` +
+- Each wiki page is `type: <concept|entity|case|pitfall|scheme|comparison|post>` + `title` +
   `sources` + `tags` + `content_hash`, with `[[wiki-link]]` syntax in the body.
 - `index.md` (hub) and `log.md` (changelog) are reserved files.
 - Consumption is tolerant: unknown `type`, missing optional fields, and dangling
@@ -123,6 +123,27 @@ raw posts ──archive/ (year/month/t<topic_id>.md)──▶ ingest ──▶ w
 - 本仓库的 OKF 规范说明见 [`SCHEMA.md`](../SCHEMA.md)（hub 编译时自动播种的 `SCHEMA.md` 与此同源）。
 - 消费端容错：未知 type、缺失可选字段、断链均视为告警而非硬错（见
   `tests/test_okf_compliance.py`）。
+
+### 5.1 分类（③，结构层 / structure layer）
+
+真实 archive 接入时，源帖最初都是 `type: post`（平铺，无结构）。`classify`
+命令把它们自动归类进上面的类型集，是 kb-forge 作为**产品**的核心能力——产品的
+卖点正是"丢进 archive → 产出有结构、可导航、可检索的知识库"，而结构由分类提供。
+
+- **本地优先、零依赖（`local` 策略，默认）**：对每个候选类型累加分数——
+  标签重叠（+2）、小标题结构信号（+3）、标题线索（+2）、正文关键词（弱 +1，
+  `entity` 禁用——正文顺带提及某工具不算实体页）。最高分胜出，平局按
+  `case > pitfall > scheme > comparison > concept > entity` 取更具体的类型，
+  零信号则兜底为 `post`。确定性、可复现、无 API key 即可跑。
+- **可选 LLM 增强（`llm` 策略）**：用标准库 `urllib` 调用 OpenAI 兼容端点
+  （无需任何 SDK），缺 key / 网络错 / 解析失败时**自动回退本地**，产品永不卡死。
+- **类型集与词典均可配置**：`config.yaml` 的 `classify.types` / `classify.lexicon`
+  / `classify.structural_rules` 在默认值上合并，用户按自己领域自定义——不硬编码
+  到某个领域，别人也能用。
+- 真实运行写回每页 `type` 并重构建 `index.md`；`--dry-run` 先预览类型分布。
+- 实现位置：`src/kbforge/core/classify.py`（策略注册同 `enrich` 的 local/llm 同构）；
+  `ClassifyConfig` 置于独立叶模块 `src/kbforge/classify_config.py` 以避开
+  core↔config 的循环导入。
 
 ## 6. Retrieval / 检索（RAG 就绪）
 

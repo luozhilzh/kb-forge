@@ -15,6 +15,8 @@ from typing import Any
 import yaml
 from dotenv import load_dotenv
 
+from .classify_config import ClassifyConfig
+
 
 # --------------------------------------------------------------------------- #
 # Config dataclasses (the contract everything else depends on)
@@ -74,6 +76,7 @@ class KbForgeConfig:
     fetch: FetchConfig = field(default_factory=FetchConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
     query: QueryConfig = field(default_factory=QueryConfig)
+    classify: ClassifyConfig = field(default_factory=ClassifyConfig)
     # --- secrets (from .env only, never serialized) ---
     llm_api_key: str = ""
     zsxq_token: str = ""
@@ -109,6 +112,7 @@ class KbForgeConfig:
             fetch=FetchConfig(**data.get("fetch", {})),
             paths=PathsConfig(**data.get("paths", {})),
             query=QueryConfig(**data.get("query", {})),
+            classify=ClassifyConfig.from_dict(data.get("classify", {})),
         )
         return cfg
 
