@@ -92,7 +92,7 @@ One **core** (the single source of truth) wrapped by thin shells:
 - **C** — the importable `kbforge` Python package + `adapters/` for cross-platform.
 - **Expert** — a WorkBuddy expert package (`expert/`) reusing core's orchestrator.
 
-See [`docs/design.md`](docs/design.md) for the full design (and [`知识星球整理工具集_开源方案.md`](https://example.invalid) for the planning rationale).
+See [`docs/design.md`](docs/design.md) for the full design (and [`知识星球整理工具集_开源方案.md`](docs/知识星球整理工具集_开源方案.md) for the planning rationale).
 
 All four forms call the **same core** through the `kbforge` CLI (subprocess), pinned to
 `kbforge>=0.1.0,<1.0.0` so a 1.0 API break fails loudly instead of silently breaking B /

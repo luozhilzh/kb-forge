@@ -2,13 +2,13 @@
 
 The canonical architecture and module layout for `kb-forge`. This document is
 the in-repo companion to the planning rationale
-(`知识星球整理工具集_开源方案.md`) and is kept in sync with the code.
+([知识星球整理工具集_开源方案.md](知识星球整理工具集_开源方案.md)) and is kept in sync with the code.
 
 ---
 
 # kb-forge 设计
 
-`kb-forge` 的权威架构与模块布局。本文档是规划文档（`知识星球整理工具集_开源方案.md`）的仓库内配套，并与代码保持同步。
+`kb-forge` 的权威架构与模块布局。本文档是规划文档（[知识星球整理工具集_开源方案.md](知识星球整理工具集_开源方案.md)）的仓库内配套，并与代码保持同步。
 
 ## 1. Principles / 设计原则
 
@@ -120,6 +120,7 @@ raw posts ──archive/ (year/month/t<topic_id>.md)──▶ ingest ──▶ w
 - 每个 wiki 页 = `type` + `title` + `sources` + `tags` + `content_hash`，正文用
   `[[wiki-link]]` 双链。
 - `index.md`（枢纽）与 `log.md`（变更史）为保留文件。
+- 本仓库的 OKF 规范说明见 [`SCHEMA.md`](../SCHEMA.md)（hub 编译时自动播种的 `SCHEMA.md` 与此同源）。
 - 消费端容错：未知 type、缺失可选字段、断链均视为告警而非硬错（见
   `tests/test_okf_compliance.py`）。
 

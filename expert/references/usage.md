@@ -1,7 +1,7 @@
 # Usage (pointer)
 
 The canonical kb-forge usage HOWTO lives at
-`../B-workbuddy-skill/references/usage.md`. This expert package is **structurally
+`../../B-workbuddy-skill/references/usage.md`. This expert package is **structurally
 identical** to the B skill (§3 / §12-⑤): it reuses the same core orchestrator
 and the same operating instructions.
 
@@ -12,7 +12,7 @@ file here so the package is self-contained.
 
 ## 中文说明
 
-`kb-forge` 的权威用法 HOWTO 位于 `../B-workbuddy-skill/references/usage.md`。
+`kb-forge` 的权威用法 HOWTO 位于 `../../B-workbuddy-skill/references/usage.md`。
 本专家包与 B Skill **结构完全同构**（§3 / §12-⑤）：复用同一个 core 编排器与同一套
 操作说明。
 

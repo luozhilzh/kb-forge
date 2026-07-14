@@ -123,7 +123,6 @@ All notable changes to this project are documented here. The format is based on
   month/limit filters, end-to-end wiki build with no inline tags, auto-seeded
   SCHEMA tags, dry-run writes nothing).
 
-[0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
 
 ---
 
@@ -233,4 +232,3 @@ All notable changes to this project are documented here. The format is based on
 - Golden 测试：`test_local_archive.py`（适配器 scan/清洗/抽 id、year/month/limit
   过滤、端到端 wiki 构建且无内联标签、自动播种 SCHEMA 标签、dry-run 不落盘）。
 
-[0.1.0]: https://github.com/example/kb-forge/releases/tag/v0.1.0
