@@ -227,11 +227,12 @@ def diff_cmd(kb_root, wiki_dir, before, fmt):
 @cli.command("enrich")
 @click.option("--kb-root", default=None, type=click.Path(path_type=Path), help="Knowledge-base root.")
 @click.option("--wiki-dir", default=None, type=click.Path(path_type=Path), help="Use an already-built wiki dir instead of <kb-root>/wiki. Given alone (no config.yaml in cwd), runs with defaults.")
-@click.option("--strategy", default="local", type=click.Choice(["local", "none"]), help="Claim extraction strategy ('none' = no-op).")
+@click.option("--strategy", default="local", type=click.Choice(["local", "none", "llm"]), help="Claim extraction strategy ('none'=no-op, 'llm'=optional OpenAI-compatible enhancement, falls back to local).")
 @click.option("--format", "fmt", default="text", type=click.Choice(["text", "json"]), help="text=human readable, json=serializable (MCP-friendly).")
 def enrich_cmd(kb_root, wiki_dir, strategy, fmt):
     """Extract claim-level source anchors from a built wiki (RAG citing)."""
     import json
+    import os
 
     cfg = load_config(start_dir=Path.cwd(), require=wiki_dir is None)
     if kb_root:
@@ -239,7 +240,11 @@ def enrich_cmd(kb_root, wiki_dir, strategy, fmt):
     elif wiki_dir:
         cfg.root = Path(wiki_dir).resolve().parent
     wiki = Path(wiki_dir) if wiki_dir else cfg.path("wiki")
-    result = enrich_wiki(wiki, strategy=get_strategy(strategy))
+    # Build the LLM config: merge config.enrich.llm with the env-provided key.
+    llm_cfg = dict(getattr(cfg.wiki.enrich, "llm", {}) or {})
+    if not llm_cfg.get("api_key"):
+        llm_cfg["api_key"] = cfg.llm_api_key or os.getenv("LLM_API_KEY", "")
+    result = enrich_wiki(wiki, strategy=get_strategy(strategy, llm=llm_cfg))
     if fmt == "json":
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
         return

@@ -90,7 +90,7 @@ src/kbforge/
 │   │   └── embedding.py    # EmbeddingRetriever (optional, OFF)
 │   ├── site.py             # build_site(): wiki -> self-contained MkDocs project
 │   ├── diff.py             # OKF anti-drift guard (validate + snapshot/diff)
-│   └── enrich.py           # local claim anchoring (LLM OFF by default)
+│   └── enrich.py           # local claim anchoring (+ LLM strategy, OFF by default)
 └── tools/
     └── make_fixtures.py    # synthetic KB generator (no real data)
 ```
@@ -185,8 +185,10 @@ so a downstream RAG retriever can cite *which source post a claim came from*, no
 just which page. The MVP ships `LocalClaimExtractor` (zero-dep, deterministic:
 keeps a sentence when it carries a wiki-link, a number/metric, a definition cue,
 or sufficient length). `EnrichmentStrategy` is the ABC; `NoOpStrategy` is the
-default; an LLM-based strategy is a documented, OFF-by-default extension point
-(mirrors `EmbeddingRetriever`).
+default; `LLMEnrichmentStrategy` is a real, **wired** optional strategy (stdlib
+`urllib`, OpenAI-compatible `/chat/completions`, transparently falls back to local
+on missing key / error) — selectable via `enrich --strategy llm` or
+`config.yaml` `wiki.enrich.strategy: llm`.
 
 **`diff` — OKF anti-drift guard.**
 `validate_wiki(wiki_dir)` checks a single compiled wiki against the OKF contract
@@ -342,16 +344,15 @@ surface B / the expert invoke.
 - Publish: `site` / MkDocs generator.
 - **Real-data ingest:** `LocalArchiveAdapter` (offline) + `ingest_archive`
   (archive on disk -> self-contained KB; no platform API).
-- **`enrich`** (local claim anchoring; LLM strategy OFF by default).
+- **`enrich`** (local claim anchoring; `llm` strategy now wired, OFF by default).
 - **`diff`** (OKF anti-drift guard: `validate` + snapshot/diff after re-ingest).
 - **MCP server** (`kbforge mcp`, exposes query/export/build_site/enrich/validate/
   diff/build as standard MCP tools; optional `mcp` dependency, zero runtime
   model/vector cost).
 
 **Deferred (not in MVP):**
-- `enrich` LLM strategy (interface implemented, OFF by default).
-- `dedupe` cross-post merge.
-- Five page types (extend concept/entity/case/pitfall with scheme/comparison).
+- `dedupe` `merge` strategy (physically collapse/relocate duplicates — a documented extension point, OFF by default).
+- `EmbeddingRetriever` (optional vector backend, OFF by default).
 
 **已实现（已测试）：**
 - Phase 0 骨架：打包、配置契约、adapter 抽象、合成 fixtures、OKF golden 测试。
@@ -361,12 +362,13 @@ surface B / the expert invoke.
 - 发布：`site` / MkDocs 生成器。
 - **真实数据接入**：`LocalArchiveAdapter`（离线）+ `ingest_archive`（本机 archive
   → 自包含 KB；不调平台 API）。
-- **`enrich`**（本地 claim 锚源；LLM 策略默认 OFF）。
+- **`enrich`**（本地 claim 锚源；`llm` 策略已接通，默认 OFF）。
 - **`diff`**（OKF 防漂移守卫：`validate` + 重抓后快照对比）。
 - **MCP server**（`kbforge mcp`，把 query/export/build_site/enrich/validate/diff/
   build 暴露成标准 MCP 工具；`mcp` 为可选依赖，运行时零模型/向量成本）。
 
 **延后（不在 MVP）：**
-- `enrich` 的 LLM 策略（接口已就位，默认 OFF）。
+- `dedupe` 的 `merge` 策略（物理合并/移除重复页——文档化扩展点，默认 OFF）。
+- `EmbeddingRetriever`（可选向量后端，默认 OFF）。
 - `dedupe` 跨帖合并。
 - 五类页面（在 concept/entity/case/pitfall 基础上扩 scheme/comparison）。

@@ -5,14 +5,17 @@ splits each wiki page into candidate claims (sentences) and attaches the page's
 source anchor (its ``sources`` frontmatter + slug), so a downstream RAG retriever
 can cite *which source post a claim came from* — not just which page.
 
-An LLM-based strategy is a **documented extension point and OFF by default**,
-mirroring ``EmbeddingRetriever``: the interface exists, a no-op default runs
-with no external services, and a real LLM strategy can be dropped in later
-without touching the pipeline.
+A real ``llm`` strategy is shipped and **OFF by default**: it calls an
+OpenAI-compatible endpoint with only stdlib (``urllib``), and on any failure
+(no key, network error, bad response) it transparently falls back to the local
+extractor — so the product never breaks when an LLM is unavailable, and no
+external SDK is required.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
@@ -106,26 +109,119 @@ class LocalClaimExtractor(EnrichmentStrategy):
         return False
 
 
-# Optional LLM strategy — extension point, intentionally OFF by default.
-#
-# class LLMEnrichmentStrategy(EnrichmentStrategy):
-#     """Requires an LLM client injected via config; not wired into MVP.
-#     Implement `extract` to call your model and return Claim objects.
-#     Activate by registering it and selecting it from config.query.enrich."""
-#     ...
+class LLMEnrichmentStrategy(EnrichmentStrategy):
+    """Optional LLM enhancement (OpenAI-compatible, stdlib only).
+
+    Asks the model to return a JSON array of concise, self-contained claims
+    extracted from the page. On missing key, network error, or unparseable
+    response it transparently falls back to :class:`LocalClaimExtractor`, so the
+    product never breaks when an LLM is unavailable. No external SDK, no required
+    dependency.
+
+    Mirror of :class:`kbforge.core.classify.LLMClassifier` — the same pattern is
+    reused so both optional LLM features stay consistent and key-free by default.
+    """
+
+    def __init__(self, llm: dict | None = None, fallback: EnrichmentStrategy | None = None):
+        self.llm = llm or {}
+        self.fallback = fallback or LocalClaimExtractor()
+
+    def extract(
+        self, slug: str, title: str, body: str, sources: list[str]
+    ) -> list[Claim]:
+        api_key = self.llm.get("api_key") or os.getenv("LLM_API_KEY", "")
+        if not api_key:
+            return self.fallback.extract(slug, title, body, sources)
+        try:
+            return self._call(slug, title, body, sources)
+        except Exception:
+            return self.fallback.extract(slug, title, body, sources)
+
+    def _call(
+        self, slug: str, title: str, body: str, sources: list[str]
+    ) -> list[Claim]:
+        api_key = self.llm.get("api_key") or os.getenv("LLM_API_KEY", "")
+        base = self.llm.get(
+            "base_url", "https://api.openai.com/v1/chat/completions"
+        )
+        model = self.llm.get("model", "gpt-4o-mini")
+        anchor = sources[0] if sources else None
+        prompt = (
+            "You are a knowledge-base claim extractor. From the page below, "
+            "extract up to 12 concise, self-contained factual claims a reader "
+            "would want to cite. Return ONLY a JSON array of strings, e.g. "
+            '["claim one", "claim two"]. No prose, no markdown fences.\n\n'
+            f"Title: {title}\n\nBody:\n{body[:4000]}"
+        )
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0,
+        }
+        data = _post_chat_completion(base, payload, api_key)
+        content = data["choices"][0]["message"]["content"].strip()
+        # Tolerate ```json ... ``` fences if the model adds them.
+        if content.startswith("```"):
+            content = content.strip("`")
+            if content.lower().startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        items = json.loads(content)
+        claims: list[Claim] = []
+        for text in items:
+            text = str(text).strip()
+            if not text:
+                continue
+            claims.append(
+                Claim(
+                    text=text,
+                    char_start=0,
+                    char_end=len(text),
+                    source_anchor=anchor,
+                    slug=slug,
+                )
+            )
+        return claims
+
+
+def _post_chat_completion(url: str, payload: dict, api_key: str, timeout: int = 30) -> dict:
+    """Call an OpenAI-compatible ``/chat/completions`` endpoint (stdlib only).
+
+    Isolated so tests can patch this single network boundary. Raises on any
+    transport/parse error — callers are expected to fall back gracefully.
+    """
+    import json
+    import urllib.request
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.load(resp)
 
 
 STRATEGIES: dict[str, type[EnrichmentStrategy]] = {
     "none": NoOpStrategy,
     "local": LocalClaimExtractor,
+    "llm": LLMEnrichmentStrategy,
 }
 
 
-def get_strategy(name: str) -> EnrichmentStrategy:
+def get_strategy(
+    name: str, llm: dict | None = None
+) -> EnrichmentStrategy:
+    """Resolve a strategy by name. ``llm`` receives its config (api_key etc.)."""
     if name not in STRATEGIES:
         raise ValueError(
             f"Unknown enrichment strategy '{name}'. Available: {sorted(STRATEGIES)}"
         )
+    if name == "llm":
+        return LLMEnrichmentStrategy(llm=llm or {})
     return STRATEGIES[name]()
 
 

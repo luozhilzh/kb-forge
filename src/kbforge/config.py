@@ -30,7 +30,9 @@ class OutputConfig:
 @dataclass
 class EnrichConfig:
     enabled: bool = False
+    strategy: str = "local"  # local (default, zero-dep) | none | llm (optional)
     model: str = ""
+    llm: dict[str, Any] = field(default_factory=dict)  # api_key, base_url, model
 
 
 @dataclass
@@ -107,7 +109,12 @@ class KbForgeConfig:
                 schema_path=data.get("wiki", {}).get("schema_path", "SCHEMA.md"),
                 slug_style=data.get("wiki", {}).get("slug_style", "kebab"),
                 page_char_limit=data.get("wiki", {}).get("page_char_limit", 4000),
-                enrich=EnrichConfig(**data.get("wiki", {}).get("enrich", {})),
+                enrich=EnrichConfig(
+                    enabled=data.get("wiki", {}).get("enrich", {}).get("enabled", False),
+                    strategy=data.get("wiki", {}).get("enrich", {}).get("strategy", "local"),
+                    model=data.get("wiki", {}).get("enrich", {}).get("model", ""),
+                    llm=data.get("wiki", {}).get("enrich", {}).get("llm", {}) or {},
+                ),
             ),
             fetch=FetchConfig(**data.get("fetch", {})),
             paths=PathsConfig(**data.get("paths", {})),

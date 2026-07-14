@@ -17,7 +17,11 @@ wiki:
   page_char_limit: 4000
   enrich:
     enabled: false           # mechanical layer is always ON; LLM enrichment is OFF by default
-    model: ""                # filled only when enrich.enabled: true (key from .env)
+    strategy: local          # local (zero-dep) | none | llm (optional OpenAI-compatible enhancement)
+    model: ""                # used only when strategy: llm (e.g. gpt-4o-mini)
+    # llm:                     # optional; api_key reads from .env LLM_API_KEY by default
+    #   base_url: "https://api.openai.com/v1/chat/completions"
+    #   model: "gpt-4o-mini"
 
 fetch:
   page_size: 50

@@ -37,6 +37,16 @@ All notable changes to this project are documented here. The format is based on
   - `dedupe <dir> --dry-run` previews the report (total / unique / duplicate groups /
     duplicates / to_write) as JSON.
 
+- **`enrich` `llm` strategy wired** (completes feature ②'s optional enhancement):
+  `LLMEnrichmentStrategy` now calls an OpenAI-compatible `/chat/completions`
+  endpoint with **stdlib `urllib` only** (no SDK), asks the model to return a JSON
+  array of concise claims, and **transparently falls back to `LocalClaimExtractor`
+  on missing key / network error / unparseable response**. The network boundary is
+  isolated in `_post_chat_completion` for testing. `enrich --strategy llm` is
+  OFF-by-default and reads its key from `config.yaml` `enrich.llm` or the
+  `LLM_API_KEY` env var. This makes the README's "LLM strategy OFF by default"
+  claim actually true.
+
 ### Fixed
 - `frontmatter.parse` now tolerates archive titles starting with YAML illegal
   indicators (`@`, `#`) by auto-quoting the offending scalar line, instead of
