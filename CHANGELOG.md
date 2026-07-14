@@ -59,6 +59,32 @@ All notable changes to this project are documented here. The format is based on
   `LLM_API_KEY` env var. This makes the README's "LLM strategy OFF by default"
   claim actually true.
 
+- **Ingest data-noise cleaning + `clean` command** (feature ⑤, data-quality
+  layer): real paid-community exports (e.g. Zsxq) carry a `## 摘要` section that
+  is almost always a *truncated, redundant preview* of the body — it repeats the
+  opening of `## 正文` and ends mid-sentence with an ellipsis, which previously
+  leaked into PPT / HTML summaries and duplicated body content.
+  - `core/clean.py`: `clean_summary_section` removes a `## 摘要` section when it
+    is a clipping of the body (verbatim containment, prefix, or fuzzy
+    near-substring via a sliding window over the normalized body — so a typo like
+    `GPT4` vs `GPT-4` still matches); a *genuinely distinct* summary is kept and
+    only a trailing truncation marker is stripped, so unique content is never
+    silently deleted. Deterministic, dependency-free, idempotent.
+  - Wired into `LocalArchiveAdapter._clean_body`, so every `ingest-archive` now
+    produces clean OKF posts automatically.
+  - `clean_post_body` is the single entry point, so further body cleaners can be
+    added without touching callers.
+  - `clean <dir>` CLI command: recursively scans `*.md` (skips
+    `index.md`/`log.md`/`SCHEMA.md`), reports what would change, and rewrites
+    in place only with `--apply` (frontmatter left byte-for-byte). Defaults to a
+    safe dry-run.
+  - Exporter `_first_paragraph` (the derived summary used by PPT / HTML / MD
+    exporters) now skips markdown heading lines and bare image embeds, so slides
+    show clean prose instead of a `## 正文` heading.
+  - Verified on the real 370-post KB: a dry-run reports **369/370 redundant
+    `## 摘要` sections removed** (the 1 remainder is a genuinely distinct
+    summary, correctly preserved).
+
 ### Fixed
 - `frontmatter.parse` now tolerates archive titles starting with YAML illegal
   indicators (`@`, `#`) by auto-quoting the offending scalar line, instead of

@@ -16,6 +16,7 @@ from .core.diff import validate_wiki, diff_wiki
 from .core.enrich import enrich_wiki, get_strategy
 from .core.classify import classify_wiki
 from .core.dedupe import dedupe_pages
+from .core.clean import clean_post_body, split_frontmatter
 from .tools import make_fixtures
 
 
@@ -311,6 +312,48 @@ def dedupe_cmd(dir, strategy, dry_run):
         click.echo("(dry-run) No files written.")
     else:
         click.echo(f"Annotated {report.duplicates} duplicate page(s) across {report.duplicate_groups} group(s); {report.to_write} file(s) written.")
+
+
+@cli.command("clean")
+@click.argument("dir", type=click.Path(path_type=Path, exists=True), required=True)
+@click.option("--apply", is_flag=True, help="Write cleaned files back. Default is a dry-run that only reports.")
+def clean_cmd(dir, apply):
+    """Clean post bodies under DIR of export noise (redundant truncated '## 摘要').
+
+    Recursively scans every *.md page (except index.md / log.md / SCHEMA.md),
+    removes '## 摘要' sections that are truncated previews of the body, and strips
+    trailing ellipses from any genuinely distinct summary. Frontmatter is left
+    byte-for-byte. Defaults to a dry-run; pass --apply to rewrite in place.
+    """
+    import json
+
+    _RESERVED = {"index.md", "log.md", "SCHEMA.md"}
+    scanned = changed = removed = stripped = 0
+    for md in sorted(Path(dir).rglob("*.md")):
+        if md.name in _RESERVED:
+            continue
+        text = md.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(text)
+        new_body, report = clean_post_body(body)
+        scanned += 1
+        if new_body != body:
+            changed += 1
+            if report.removed_summary:
+                removed += 1
+            if report.stripped_truncation:
+                stripped += 1
+            if apply:
+                out_text = (fm.rstrip("\n") + "\n\n" + new_body) if fm else new_body
+                md.write_text(out_text, encoding="utf-8")
+    click.echo(json.dumps({
+        "scanned": scanned,
+        "changed": changed,
+        "summary_sections_removed": removed,
+        "truncation_markers_stripped": stripped,
+        "applied": apply,
+    }, ensure_ascii=False, indent=2))
+    if not apply:
+        click.echo("(dry-run) No files written. Pass --apply to clean in place.")
 
 
 def main() -> None:

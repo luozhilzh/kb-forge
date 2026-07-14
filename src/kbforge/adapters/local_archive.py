@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable
 
+from ..core.clean import clean_post_body
 from .base import Attachment, FetchResult, PlatformAdapter, Topic
 
 # Strip zsxq-style inline element tags: <e .../>, <e ...>...</e>, </e>
@@ -28,6 +29,8 @@ def _clean_body(body: str) -> str:
     text = _INLINE_ELEM_RE.sub("", body)
     # collapse 3+ blank lines into 2 for tidy Markdown
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    # remove redundant truncated "## 摘要" previews (real-world export noise)
+    text, _ = clean_post_body(text)
     return text
 
 

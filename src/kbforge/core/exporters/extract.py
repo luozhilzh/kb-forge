@@ -29,14 +29,21 @@ DEFAULT_TYPES = frozenset({"case", "pitfall", "concept"})
 _RESERVED = {"index.md", "log.md"}
 
 _BLOCK_RE = re.compile(r"\n\s*\n")
+# A line that is a markdown heading or a bare image embed — not prose.
+_NON_PROSE_RE = re.compile(r"^\s*(#{1,6}\s+\S+|!\[[^\]]*\]\([^)]*\)\s*)$")
 
 
 def _first_paragraph(body: str, limit: int = 120) -> str:
-    """Use the first non-empty paragraph as a short summary."""
+    """Use the first non-empty prose paragraph as a short summary.
+
+    Markdown heading lines (e.g. ``## 正文``) and bare image embeds are skipped
+    so the derived summary is clean prose, not a section heading.
+    """
     for para in _BLOCK_RE.split(body.strip()):
-        para = para.strip()
-        if para:
-            return para if len(para) <= limit else para[: limit - 1].rstrip() + "…"
+        lines = [ln for ln in para.splitlines() if ln.strip() and not _NON_PROSE_RE.match(ln)]
+        prose = " ".join(lines).strip()
+        if prose:
+            return prose if len(prose) <= limit else prose[: limit - 1].rstrip() + "…"
     return ""
 
 

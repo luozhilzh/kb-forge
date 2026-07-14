@@ -287,6 +287,13 @@ self-contained KB **without touching any platform API** (no zsxq-cli, no token).
   cleans zsxq inline `<e .../>` tags, derives the numeric `topic_id` from the
   filename, and maps frontmatter (`title`/`author`/`date`/`tags`) into `Topic`
   objects. `scan(year, month, limit)` slices the archive.
+- **Body-level data-noise cleaning** (`core/clean.py`, called from
+  `LocalArchiveAdapter._clean_body`): real exports carry a `## 摘要` section that
+  is almost always a *truncated, redundant preview* of `## 正文` (it repeats the
+  opening and ends mid-sentence with `…`). Such a section is removed automatically
+  during ingest; a genuinely distinct summary is kept (only a trailing ellipsis is
+  stripped). The same logic is exposed as `kbforge clean <dir> [--apply]` to
+  retro-clean an already-ingested corpus (dry-run by default).
 - `ingest_archive(source, out, *, year, month, limit, dry_run)` writes normalized
   OKF posts into `<out>/archive/<year>/<month>/`, seeds `SCHEMA.md` with the
   discovered tags, then calls `run()` to compile the wiki. The output is
@@ -304,6 +311,10 @@ API**（不调 zsxq-cli、不需要 token）。
 - `LocalArchiveAdapter(root)` 读 `<year>/<month>/<date>-t<topic_id>.md` 帖，清洗 zsxq 的
   `<e .../>` 内联标签，从文件名抽数字 `topic_id`，把 frontmatter（`title`/`author`/`date`/`tags`）
   映射成 `Topic`。`scan(year, month, limit)` 可切片。
+- **正文级数据噪音清洗**（`core/clean.py`，挂在 `LocalArchiveAdapter._clean_body`）：真实帖常带
+  `## 摘要` 段，几乎都是 `## 正文` 开头的截断预览（重复开头、以 `…` 半截收尾）。入库时这类段会被
+  自动删掉；确属独立的摘要则保留（仅去结尾省略号）。同一逻辑也暴露成 `kbforge clean <dir> [--apply]`
+  以便对「已入库语料」补清洗（默认 dry-run）。
 - `ingest_archive(source, out, *, year, month, limit, dry_run)` 把归一化 OKF 帖写入
   `<out>/archive/<year>/<month>/`，用扫描到的标签自动播种 `SCHEMA.md`，再调 `run()` 编译 wiki。
   产物与 `make-fixtures` 字节级同构，故 `query`/`site`/`export`/`enrich`/`diff`/`mcp` 原样可用。

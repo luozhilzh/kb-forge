@@ -64,6 +64,11 @@ kbforge classify --kb-root tests/fixtures/sample_kb --strategy local   # --dry-r
 # Detect & mark duplicate pages by body hash (non-destructive, local-first)
 kbforge dedupe tests/fixtures/sample_kb/wiki   # add --dry-run to preview
 
+# Clean export noise from ingested posts (removes redundant truncated '## 摘要'
+# previews; default dry-run reports, --apply rewrites in place)
+kbforge clean tests/fixtures/sample_kb/archive        # preview what would change
+kbforge clean tests/fixtures/sample_kb/archive --apply
+
 # Expose everything as standard MCP tools for any LLM agent (RAG closure)
 pip install ".[mcp]"
 kbforge mcp                 # stdio server (default for local agents)
@@ -190,6 +195,10 @@ kbforge classify --kb-root tests/fixtures/sample_kb --strategy local   # --dry-r
 
 # 按正文哈希检测并标注重复页面（非破坏、本地优先）
 kbforge dedupe tests/fixtures/sample_kb/wiki   # 加 --dry-run 先预览
+
+# 清理入库帖的导出噪音（删掉冗余截断的 '## 摘要' 预览段；默认 dry-run 只报告，--apply 才回写）
+kbforge clean tests/fixtures/sample_kb/archive        # 先预览会改哪些
+kbforge clean tests/fixtures/sample_kb/archive --apply
 
 # 把全部能力暴露成标准 MCP 工具，让任意 LLM agent 直接调用（RAG 闭环）
 pip install ".[mcp]"
